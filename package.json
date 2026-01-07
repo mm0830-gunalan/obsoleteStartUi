@@ -1,0 +1,16 @@
+{
+    "name": "mta-project",
+    "version": "0.0.1",
+    "description": "Build and deployment scripts",
+    "scripts": {
+        "clean": "rimraf resources mta_archives mta-op*",
+        "build": "rimraf resources mta_archives && mbt build --mtar archive",
+        "deploy": "cf deploy mta_archives/archive.mtar --retries 1",
+        "undeploy": "cf undeploy Obsolete --delete-services --delete-service-keys --delete-service-brokers"
+    },
+    "devDependencies": {
+        "@ui5/cli": "^4.0.38",
+        "mbt": "^1.2.18",
+        "rimraf": "^3.0.2"
+    }
+}

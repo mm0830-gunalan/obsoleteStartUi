@@ -1,0 +1,101 @@
+<mvc:View
+    controllerName="obsolerteworkflow.workflowuimodule.controller.App"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:u="sap.ui.unified"
+    displayBlock="true"
+>
+    <App id="app1">
+        <Page
+            title="Create Workflow Item"
+            class="sapUiContentPadding"
+        >
+            <content>
+                <f:SimpleForm
+                    id="uploadForm"
+                    layout="ResponsiveGridLayout"
+                    editable="true"
+                    labelSpanXL="3"
+                    labelSpanL="3"
+                    labelSpanM="4"
+                    labelSpanS="12"
+                    adjustLabelSpan="false"
+                    emptySpanXL="4"
+                    emptySpanL="4"
+                    emptySpanM="0"
+                    emptySpanS="0"
+                    columnsXL="1"
+                    columnsL="1"
+                    columnsM="1"
+                >
+                    <!-- Company Dropdown -->
+                    <Label
+                        text="Company"
+                        required="true"
+                    />
+                    <Select
+                        id="companySelect"
+                        width="100%"
+                        class="sapUiSmallMarginBottom"
+                        selectedKey="{/company}"
+                    >
+                        <items>
+                            <core:Item
+                                key="1000"
+                                text="Company 1000"
+                            />
+                            <core:Item
+                                key="2000"
+                                text="Company 2000"
+                            />
+                            <core:Item
+                                key="3000"
+                                text="Company 3000"
+                            />
+                        </items>
+                    </Select>
+
+                    <!-- Excel File Upload -->
+                    <Label
+                        text="Upload Excel File"
+                        required="true"
+                    />
+                    <u:FileUploader
+                        id="excelUploader"
+                        fileType="xlsx"
+                        placeholder="Choose an Excel file"
+                        buttonText="Browse"
+                        width="100%"
+                        class="sapUiSmallMarginBottom"
+                        change="onFileChange"
+                        useMultipart="false"
+                    />
+                </f:SimpleForm>
+            </content>
+
+            <!-- Footer with Submit Button -->
+            <footer>
+                <Toolbar>
+                    <ToolbarSpacer />
+                    <Button
+                        text="Submit"
+                        type="Emphasized"
+                        press="onSubmit"
+                    />
+
+                    <Button
+                        text="Upload"
+                        type="Emphasized"
+                        press="onUpload"
+                    />
+                    <Button
+                        text="Test List Root Contents"
+                        press="onTestRepositories"
+                    />
+                </Toolbar>
+            </footer>
+        </Page>
+    </App>
+</mvc:View>

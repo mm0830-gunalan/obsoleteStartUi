@@ -1,0 +1,21 @@
+<mvc:View controllerName="obsolerteworkflow.workflowuimodule.controller.MyStartUI"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m">
+    <App id="app">
+        <pages>
+            <Page title="Workflow Start UI">
+                <content>
+                    <VBox width="100%" direction="Column" class="sapUiTinyMargin">
+                        <items>
+                            <Text text="Initial Workflow Context:"/>
+                            <TextArea width="100%" value="{/initialContext}" rows="8" />
+                            <Button text="Start Workflow" press="startWorkflowInstance"/>
+                            <Text text="API Response:" class="sapUiSmallMarginTop"/>
+                            <TextArea width="100%" value="{/apiResponse}" rows="14"/>
+                        </items>
+                    </VBox>
+                </content>
+            </Page>
+        </pages>
+    </App>
+</mvc:View>

@@ -56,13 +56,15 @@ sap.ui.define(
           .toUpperCase();
       },
 
-      startWorkflowInstance: function (oPayload) {
+      startWorkflowInstance: function (oPayload, folderIdCmis,docId) {
         var model = this.getView().getModel();
         let data = {
           "definitionId": "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
           "context": {
             "obsoleteitems": oPayload,
-            "company": this.byId("companySelect").getSelectedKey()
+            "company": this.byId("companySelect").getSelectedKey(),
+            "file": folderIdCmis,
+            "documentid":docId
           }
         }
 
@@ -150,10 +152,16 @@ sap.ui.define(
 
         var oFile = oUploader.oFileUpload.files[0];
 
+
+
         if (!oFile) {
           MessageBox.error("Please upload an Excel file");
           return;
         }
+
+        const sFileName = oFile.name + "_" + this._generateUUID();
+
+        const sOrgFileName = oFile.name;
 
         var reader = new FileReader();
         reader.onload = (e) => {
@@ -186,11 +194,40 @@ sap.ui.define(
                 title: "Confirm Submission",
                 actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
                 emphasizedAction: sap.m.MessageBox.Action.YES,
-                onClose: function (oAction) {
+                // onClose: function (oAction) {
+                //   if (oAction === sap.m.MessageBox.Action.YES) {
+
+                //     const result = this.onUpload(sFileName);
+                //     if (result != "") {
+                //       this.onUploadDocument(oFile, sFileName, result);
+                //     } else {
+                //       sap.m.MessageToast.show("Failed to create folder")
+                //     }
+                //     this.startWorkflowInstance(payloadData);
+                //   }
+                // }.bind(this)
+                onClose: async function (oAction) {
                   if (oAction === sap.m.MessageBox.Action.YES) {
-                    this.startWorkflowInstance(payloadData);
+                    try {
+                      const folderId = await this.onUpload(sFileName); // ✅ WAIT HERE
+
+                      if (folderId) {
+                        const docId = await this.onUploadDocument(oFile, sOrgFileName, sFileName);
+
+                        const folderIdCmis = `spa-res:cmis:folderid:${folderId}`
+
+                        this.startWorkflowInstance(payloadData, folderIdCmis,docId);
+                      } else {
+                        sap.m.MessageToast.show("Failed to create folder");
+                      }
+
+                    } catch (err) {
+                      console.error(err);
+                      MessageBox.error("Folder creation failed");
+                    }
                   }
                 }.bind(this)
+
               }
             );
 
@@ -495,60 +532,7 @@ sap.ui.define(
         // If string (already formatted)
         return value;
       },
-      // _formatExcelDate: function (value) {
 
-      //   var dateObj;
-
-      //   // Case 1: JS Date object
-      //   if (value instanceof Date) {
-      //     dateObj = value;
-      //   }
-      //   // Case 2: Excel serial number
-      //   else if (typeof value === "number") {
-      //     var excelEpoch = new Date(Date.UTC(1899, 11, 30));
-      //     dateObj = new Date(excelEpoch.getTime() + value * 86400000);
-      //   }
-      //   // Case 3: Already string (assume correct format)
-      //   else if (typeof value === "string") {
-      //     return value; // e.g. "17.06.2024"
-      //   }
-      //   else {
-      //     return "";
-      //   }
-
-      //   // Format → DD.MM.YYYY
-      //   var day = String(dateObj.getUTCDate()).padStart(2, "0");
-      //   var month = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
-      //   var year = dateObj.getUTCFullYear();
-
-      //   return `${day}.${month}.${year}`;
-      // },
-
-
-      // _toDecimal: function (value) {
-
-      //   if (value === null || value === undefined || value === "") {
-      //     return 0;
-      //   }
-
-      //   // If already a number
-      //   if (typeof value === "number") {
-      //     return Number(value.toFixed(2));
-      //   }
-
-      //   // If string → clean it
-      //   if (typeof value === "string") {
-      //     var cleaned = value
-      //       .replace(/€/g, "")
-      //       .replace(/,/g, "")
-      //       .trim();
-
-      //     var num = parseFloat(cleaned);
-      //     return isNaN(num) ? 0 : Number(num.toFixed(2));
-      //   }
-
-      //   return 0;
-      // },
 
       _toDecimal: function (value) {
 
@@ -596,209 +580,228 @@ sap.ui.define(
         return String(value);
       },
 
-      // onUpload: function () {
-      //   // var oUploader = this.byId("excelUploader");
-      //   var oUploader = this.byId("excelUploader");
-
-      //   if (!oUploader || !oUploader.oFileUpload || !oUploader.oFileUpload.files.length) {
-      //     sap.m.MessageBox.error("Please upload an Excel file");
-      //     return;
-      //   }
-
-      //   var oFile = oUploader.oFileUpload.files[0];
 
 
-      //   // let data = {
-      //   //   "cmisaction": "createFolder",
-      //   //   "propertyId[0]": "cmis:name",
-      //   //   "propertyValue[0]": "test",
-      //   //   "propertyId[1]": "cmis:objectTypeId",
-      //   //   "propertyValue[1]": "cmis:folder",
-      //   //   "succinct": true
-      //   // }
-      //   fetch("/dmsrepo/root", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json"
-      //     },
-      //     body: JSON.stringify({
-      //       properties: {
-      //         "cmis:name": "testFolder",
-      //         "cmis:objectTypeId": "cmis:folder"
+      // onUpload: async function (sFileName) {
+      //   try {
+      //     const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7"; // from /browser
+      //     const folderName = sFileName + this._generateUUID();
+
+
+      //     const formData = new FormData();
+      //     formData.append("cmisaction", "createFolder");
+      //     formData.append("propertyId[0]", "cmis:name");
+      //     formData.append("propertyValue[0]", folderName);
+      //     formData.append("propertyId[1]", "cmis:objectTypeId");
+      //     formData.append("propertyValue[1]", "cmis:folder");
+      //     formData.append("succinct", true);
+
+
+
+      //     $.ajax({
+      //       url: this._getWorkflowRuntimeBaseURLTest() + `/${repositoryId}/root`,
+      //       method: "POST",
+      //       data: formData,
+      //       processData: false,
+      //       contentType: false,
+      //       async:false,
+      //       headers: {
+      //         "X-CSRF-Token": this._fetchToken(),
+      //       },
+
+      //       success: function (data) {
+      //         return `${data.succinctProperties["cmis:objectId"]}`
+      //       },
+      //       error: function (err) {
+      //         return "";
       //       }
-      //     })
-      //   })
-      //     .then(res => res.json())
-      //     .then(data => {
-      //       MessageToast.show("Folder created: " + data.succinctProperties["cmis:objectId"]);
-      //     })
-      //     .catch(err => {
-      //       MessageToast.show("Error creating folder");
+      //     });
+      //   } catch (err) {
+      //     console.error(err);
+      //     MessageBox.error("Failed to create folder");
+      //   }
+      // },
+
+
+      onUpload: function (sFolderName) {
+        return new Promise((resolve, reject) => {
+          try {
+            const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7";
+            // const folderName = sFileName + "_" + this._generateUUID();
+
+            const formData = new FormData();
+            formData.append("cmisaction", "createFolder");
+            formData.append("propertyId[0]", "cmis:name");
+            formData.append("propertyValue[0]", sFolderName);
+            formData.append("propertyId[1]", "cmis:objectTypeId");
+            formData.append("propertyValue[1]", "cmis:folder");
+            formData.append("succinct", "true");
+
+            $.ajax({
+              url: this._getWorkflowRuntimeBaseURLTest() + `/${repositoryId}/root`,
+              method: "POST",
+              data: formData,
+              processData: false,
+              contentType: false,
+              headers: {
+                "X-CSRF-Token": this._fetchToken()
+              },
+              success: function (data) {
+                const folderId = data.succinctProperties["cmis:objectId"];
+                resolve(folderId); // ✅ THIS is the real return
+              },
+              error: function (err) {
+                reject(err);
+              }
+            });
+
+          } catch (e) {
+            reject(e);
+          }
+        });
+      },
+      _generateUUID: function () {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      },
+
+
+      // onUploadDocument: function (oFile, sFileName, sFolderObjectId) {
+      //   try {
+      //     const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7";
+
+      //     const formData = new FormData();
+      //     formData.append("cmisaction", "createDocument");
+
+      //     // CMIS properties
+      //     formData.append("propertyId[0]", "cmis:name");
+      //     formData.append("propertyValue[0]", sFileName);
+
+      //     formData.append("propertyId[1]", "cmis:objectTypeId");
+      //     formData.append("propertyValue[1]", "cmis:document");
+
+      //     // Optional but recommended
+      //     formData.append("_charset_", "UTF-8");
+      //     formData.append("succinct", true);
+
+      //     // File content
+      //     formData.append("media", oFile);
+
+      //     $.ajax({
+      //       url: this._getWorkflowRuntimeBaseURLTest() +
+      //         `/${repositoryId}/${sFolderObjectId}`,
+      //       method: "POST",
+      //       data: formData,
+      //       processData: false,
+      //       contentType: false,
+      //       headers: {
+      //         "X-CSRF-Token": this._fetchToken()
+      //       },
+      //       success: function (data) {
+      //         const documentId = data.succinctProperties["cmis:objectId"];
+      //         sap.m.MessageToast.show("Document uploaded successfully");
+      //         console.log("Document ID:", documentId);
+      //       },
+      //       error: function (err) {
+      //         console.error(err);
+      //         sap.m.MessageBox.error("Failed to upload document");
+      //       }
       //     });
 
-
-
-      //   // $.ajax({
-      //   //   url: this._getWorkflowRuntimeBaseURL1(),
-      //   //   method: "POST",
-      //   //   async: false,
-      //   //   contentType: "application/json",
-      //   //   headers: {
-      //   //     "X-CSRF-Token": this._fetchToken(),
-      //   //   },
-      //   //   data: JSON.stringify(data),
-      //   //   success: function (result, xhr, data) {
-      //   //     // model.setProperty(
-      //   //     console.log(result);
-      //   //     //   "/apiResponse",
-      //   //     //   JSON.stringify(result, null, 4)
-      //   //     // );
-      //   //   },
-      //   //   error: function (request, status, error) {
-      //   //     var response = JSON.parse(request.responseText);
-      //   //     // model.setProperty(
-      //   //     //   "/apiResponse",
-      //   //     //   JSON.stringify(response, null, 4)
-      //   //     // );
-      //   //   },
-      //   // });
-      // },
-      // _getWorkflowRuntimeBaseURL1: function () {
-      //   var ui5CloudService = this.getOwnerComponent().getManifestEntry("/sap.cloud/service").replaceAll(".", "");
-      //   var ui5ApplicationName = this.getOwnerComponent().getManifestEntry("/sap.app/id").replaceAll(".", "");
-      //   var appPath = `${ui5CloudService}.${ui5ApplicationName}`;
-      //   return `/${appPath}/browser/cc918620-3f34-4544-b260-cb5ad8a568d7/root`
-
+      //   } catch (e) {
+      //     console.error(e);
+      //     sap.m.MessageBox.error("Unexpected error during upload");
+      //   }
       // },
 
-      onUpload: async function () {
-        try {
-          const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7"; // from /browser
-          const folderName = "sapui";
 
+      onUploadDocument: function (oFile, sFileName, sFolderObjectId) {
+        return new Promise((resolve, reject) => {
+          try {
+            const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7";
 
-          const formData = new FormData();
-          formData.append("cmisaction", "createFolder");
-          formData.append("propertyId[0]", "cmis:name");
-          formData.append("propertyValue[0]", folderName);
-          formData.append("propertyId[1]", "cmis:objectTypeId");
-          formData.append("propertyValue[1]", "cmis:folder");
-          formData.append("succinct", true);
+            const formData = new FormData();
+            formData.append("cmisaction", "createDocument");
 
+            // CMIS properties
+            formData.append("propertyId[0]", "cmis:name");
+            formData.append("propertyValue[0]", sFileName);
 
+            formData.append("propertyId[1]", "cmis:objectTypeId");
+            formData.append("propertyValue[1]", "cmis:document");
 
-          $.ajax({
-            url: `/dms/browser/${repositoryId}/root`,
-            method: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-              "Accept": "application/json"
-            },
+            // formData.append("_charset_", "UTF-8");
+            formData.append("filename", sFileName);
+            formData.append("succinct", "true");
+            formData.append("includeAllowableActions", "true");
+            // File content
+            formData.append("media", oFile);
 
+            $.ajax({
+              url: this._getWorkflowRuntimeBaseURLTest() +
+                `/${repositoryId}/root/${sFolderObjectId}`,
+              method: "POST",
+              data: formData,
+              processData: false,
+              contentType: false,
+              headers: {
+                "X-CSRF-Token": this._fetchToken()
+              },
+              success: function (data) {
+                const documentId = data.succinctProperties["cmis:objectId"];
+                console.log("Document ID:", documentId);
+                resolve(documentId);
+              },
+              error: function (err) {
+                reject(err);
+              }
+            });
 
-            // headers: {
-            //   "X-CSRF-Token": csrfToken
-            // },
-
-
-            // headers: {
-            //   // OAuth token copied from Postman
-            //   "Authorization": `Bearer ${token}`
-            // },
-            success: function (data) {
-              sap.m.MessageToast.show("Folder created successfully");
-              console.log(data);
-            },
-            error: function (err) {
-              MessageBox.error("Failed to create folder");
-            }
-          });
-
-
-          if (!response.ok) {
-            throw new Error(await response.text());
-          }
-
-          const result = await response.json();
-          console.log("Folder Created:", result);
-
-          sap.m.MessageToast.show("Folder created successfully");
-        } catch (err) {
-          console.error(err);
-          MessageBox.error("Failed to create folder");
-        }
-      },
-
-
-      onUpload1: function () {
-
-
-        var sRepositoryId = "your_repository_id_here"; // e.g., "abc123-4567"
-
-        // Folder name: Hardcoded or from an input field
-        var sFolderName = "MyNewFolder";
-        // Example with input: this.byId("folderNameInput").getValue();
-
-        if (!sFolderName) {
-          MessageBox.error("Please enter a folder name.");
-          return;
-        }
-
-        // Proxied URL: /dms/browser/<repoId>/root for root folder creation
-        var sUrl = "/dms/browser/" + sRepositoryId + "/root";
-
-        // CMIS createFolder parameters (form-urlencoded)
-        var oData = {
-          cmisaction: "createFolder",
-          "propertyId[0]": "cmis:name",
-          "propertyValue[0]": sFolderName,
-          "propertyId[1]": "cmis:objectTypeId",
-          "propertyValue[1]": "cmis:folder",
-          succinct: "true" // Optional: returns simplified JSON response
-        };
-
-        // AJAX POST call
-        jQuery.ajax({
-          url: sUrl,
-          type: "POST",
-          data: oData,
-          contentType: "application/x-www-form-urlencoded",
-          dataType: "json", // Expect JSON response
-          success: function (oResponse) {
-            MessageToast.show("Folder '" + sFolderName + "' created successfully!\nObject ID: " + oResponse.succinctProperties["cmis:objectId"]);
-            // Optional: Refresh your folder list/table here
-          },
-          error: function (oXHR, sStatus, sError) {
-            var sMsg = "Error creating folder: " + sStatus + " - " + sError;
-            if (oXHR.responseJSON && oXHR.responseJSON.message) {
-              sMsg += "\nDetails: " + oXHR.responseJSON.message;
-            }
-            MessageBox.error(sMsg);
+          } catch (e) {
+            reject(e);
           }
         });
       },
+
       onTestRepositories: function () {
-        var sUrl = "/dms/browser";  // Proxies to /rest/v2/repositories
+        var sUrl = "/dms_api/browser";  // Proxies to /rest/v2/repositories
 
 
-        
-        jQuery.ajax({
-          url: sUrl,
-          type: "GET",
-          dataType: "json",
-          success: function (oResponse) {
-            console.log("Repositories:", oResponse);
-            sap.m.MessageToast.show("Repositories fetched! Check console for details.");
-            // Look for your repo and note the "cmisRepositoryId" field
+
+        $.ajax({
+          url: this._getWorkflowRuntimeBaseURLTest(),
+          method: "GET",
+          async: false,
+          contentType: "application/json",
+          headers: {
+            "X-CSRF-Token": this._fetchToken(),
           },
-          error: function (oXHR) {
-            console.error("Error:", oXHR.responseText);
-            sap.m.MessageBox.error("Failed to fetch repositories: " + oXHR.status);
-          }
+          // success: function (result, xhr, data) {
+          // },
+          success: function (result) {
+            sap.m.MessageBox.success(
+              "Submitted successfully"
+            );
+          },
+          error: function (request, status, error) {
+            var response = JSON.parse(request.responseText);
+            MessageBox.error(response.error.message);
+          },
         });
-      }
+      },
+
+      _getWorkflowRuntimeBaseURLTest: function () {
+        var ui5CloudService = this.getOwnerComponent().getManifestEntry("/sap.cloud/service").replaceAll(".", "");
+        var ui5ApplicationName = this.getOwnerComponent().getManifestEntry("/sap.app/id").replaceAll(".", "");
+        var appPath = `${ui5CloudService}.${ui5ApplicationName}`;
+        return `/${appPath}/dms_api/browser`
+
+      },
+
+
 
 
 

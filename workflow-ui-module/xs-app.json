@@ -11,16 +11,17 @@
       "authenticationType": "xsuaa"
     },
     {
-      "source": "^/dms_api/(.*)$",
+      "source": "^/dms/(.*)$",
       "target": "$1",
       "destination": "DMS_API",
       "authenticationType": "xsuaa"
     },
-    {
-      "source": "^/dms/(.*)$",
+   {
+      "source": "^/dms_api/(.*)$",
       "target": "$1",
-      "destination": "test_dms",
-      "authenticationType": "none"
+      "authenticationType": "xsuaa",
+      "service": "com.sap.ecm.reuse",
+      "endpoint": "ecmservice"
     },
     {
       "source": "^/bpmworkflowruntime/(.*)$",

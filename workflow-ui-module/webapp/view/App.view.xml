@@ -85,7 +85,7 @@
                         press="onSubmit"
                     />
 
-                    <Button
+                    <!-- <Button
                         text="Upload"
                         type="Emphasized"
                         press="onUpload"
@@ -93,7 +93,7 @@
                     <Button
                         text="Test List Root Contents"
                         press="onTestRepositories"
-                    />
+                    /> -->
                 </Toolbar>
             </footer>
         </Page>

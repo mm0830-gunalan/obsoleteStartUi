@@ -782,6 +782,8 @@ sap.ui.define(
       onTestRepositories: function () {
         var sUrl = "/dms/browser";  // Proxies to /rest/v2/repositories
 
+
+        
         jQuery.ajax({
           url: sUrl,
           type: "GET",

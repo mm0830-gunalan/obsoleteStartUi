@@ -7,7 +7,7 @@
     xmlns:u="sap.ui.unified"
     displayBlock="true"
 >
-    <App id="app1">
+     <App id="app1">
         <Page
             title="Create Workflow Item"
             class="sapUiContentPadding"

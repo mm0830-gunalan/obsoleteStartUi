@@ -61,7 +61,7 @@ sap.ui.define(
         let data = {
           "definitionId": "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
           "context": {
-            "obsoleteitems": oPayload,
+            // "obsoleteitems": oPayload,
             "company": this.byId("companySelect").getSelectedKey(),
             "file": folderIdCmis,
             "documentid":docId

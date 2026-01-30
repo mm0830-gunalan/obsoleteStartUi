@@ -7,25 +7,7 @@ sap.ui.define(
     "use strict";
 
     return BaseController.extend("obsolerteworkflow.workflowuimodule.controller.App", {
-      // _REQUIRED_COLUMNS: [
-      //   "RFQ - ID",
-      //   "PLANT",
-      //   "COMPONENT",
-      //   "DESCRIPTION",
-      //   "MANUFACTURER PART NR.",
-      //   "AVAILABLE STOCK (FREE STOCK), M, PC",
-      //   "AVAILABLE €\r\nCU INCLUDED",
-      //   // "AVAILABLE € CU INCLUDED",
-      //   "LAST CONSUMPTION",
-      //   "RANGE OF COVERAGE IN MONTHS",
-      //   "PN",
-      //   "CUSTOMER",
-      //   "END CUSTOMER",
-      //   "REASON",
-      //   "CAUSED",
-      //   "WEIGHT (ON BASE UNIT)",
-      //   "TOTAL AMOUNT"
-      // ],
+
       _REQUIRED_COLUMNS: [
         "RFQ-ID",
         "PLANT",
@@ -175,7 +157,7 @@ sap.ui.define(
             cellDates: true
           });
 
-          // 🔥 NORMALIZE ONCE HERE
+          //  NORMALIZE ONCE HERE
           excelData = this._normalizeExcelData(excelData);
 
 
@@ -183,29 +165,13 @@ sap.ui.define(
             var payloadData = this._validateAndMapExcel(excelData);
             console.log("Mapped Payload:", payloadData);
 
-            // 🔥 assign mapped data to workflow payload
-            // this.startWorkflowInstance(payloadData);
 
-            // sap.m.MessageToast.show("Excel validated successfully");
-            // this.startWorkflowInstance(payloadData);
             MessageBox.confirm(
               "Excel validated successfully.\n\nAre you sure you want to submit?",
               {
                 title: "Confirm Submission",
                 actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
                 emphasizedAction: sap.m.MessageBox.Action.YES,
-                // onClose: function (oAction) {
-                //   if (oAction === sap.m.MessageBox.Action.YES) {
-
-                //     const result = this.onUpload(sFileName);
-                //     if (result != "") {
-                //       this.onUploadDocument(oFile, sFileName, result);
-                //     } else {
-                //       sap.m.MessageToast.show("Failed to create folder")
-                //     }
-                //     this.startWorkflowInstance(payloadData);
-                //   }
-                // }.bind(this)
                 onClose: async function (oAction) {
                   if (oAction === sap.m.MessageBox.Action.YES) {
                     try {
@@ -260,64 +226,7 @@ sap.ui.define(
         });
       },
 
-      // _validateAndMapExcel: function (excelData) {
 
-      //   if (!excelData.length) {
-      //     throw new Error("Excel file is empty");
-      //   }
-
-      //   // Normalize headers to UPPER CASE
-      //   var headers = Object.keys(excelData[0]).map(h => h.toUpperCase());
-
-      //   // Validate all required columns exist
-      //   this._REQUIRED_COLUMNS.forEach(col => {
-      //     if (!headers.includes(col)) {
-      //       throw new Error(`Missing required column: ${col}`);
-      //     }
-      //   });
-
-      //   // Validate rows + map data
-      //   var mappedItems = excelData.map((row, index) => {
-
-      //     // Check empty cells
-      //     this._REQUIRED_COLUMNS.forEach(col => {
-      //       var value = row[col] || row[col.toLowerCase()];
-      //       if (value === "" || value === null) {
-      //         throw new Error(`Empty value in column "${col}" at row ${index + 2}`);
-      //       }
-      //     });
-
-      //     return {
-      //       RFQID: row["RFQ - ID"],
-      //       Plant: row["PLANT"],
-      //       Component: row["COMPONENT"],
-      //       Description: row["DESCRIPTION"],
-      //       Manufacturer: row["MANUFACTURER PART NR."],
-      //       AvailableStock: row["AVAILABLE STOCK (FREE STOCK), M, PC"],
-      //       AvailableCU: row[" AVAILABLE €\r\nCU INCLUDED "],
-      //       RangeOfCoverage: row["RANGE OF COVERAGE IN MONTHS"],
-      //       PN: row["PN"],
-      //       Customer: row["CUSTOMER"],
-      //       EndCustomer: row["END CUSTOMER"],
-      //       LastConsumptionDate: row["LAST CONSUMPTION"],
-      //       Reason: row["REASON"],
-      //       Caused: row["CAUSED"],
-      //       Weight: row["WEIGHT (ON BASE UNIT)"],
-      //       TotalAmount: row["TOTAL AMOUNT"]
-      //     };
-      //   });
-
-      //   return mappedItems;
-      // },
-
-
-      // _normalizeRowKeys: function (row) {
-      //   var normalized = {};
-      //   Object.keys(row).forEach(key => {
-      //     normalized[key.trim().toUpperCase()] = row[key];
-      //   });
-      //   return normalized;
-      // },
 
 
       _normalizeRowKeys: function (row) {
@@ -338,106 +247,6 @@ sap.ui.define(
       },
 
 
-      // _validateAndMapExcel: function (excelData) {
-
-      //   if (!excelData.length) {
-      //     throw new Error("Excel file is empty");
-      //   }
-
-      //   // Normalize header names
-      //   var normalizedHeaders = Object.keys(excelData[0])
-      //     .map(h => h.trim().toUpperCase());
-
-      //   // Validate required columns
-      //   this._REQUIRED_COLUMNS.forEach(col => {
-      //     if (!normalizedHeaders.includes(col)) {
-      //       throw new Error(`Missing required column: ${col}`);
-      //     }
-      //   });
-
-
-
-
-
-
-      //   // Validate rows + map
-      //   var mappedItems = excelData.map((row, index) => {
-
-      //     var r = this._normalizeRowKeys(row); // ✅ IMPORTANT
-
-      //     // Validate empty cells
-      //     this._REQUIRED_COLUMNS.forEach(col => {
-      //       // if (col == 'AVAILABLE €\r\nCU INCLUDED') {
-      //       //   col = "AVAILABLE € CU INCLUDED"
-      //       // }
-      //       if (r[col] === "" || r[col] === null || r[col] === undefined) {
-      //         throw new Error(`Empty value in column "${col}" at row ${index + 2}`);
-      //       }
-      //     });
-
-      //     // ✅ FINAL CORRECT MAPPING
-      //     // return {
-      //     //   RFQID: r["RFQ - ID"],
-      //     //   Plant: r["PLANT"],
-      //     //   Component: r["COMPONENT"],
-      //     //   Description: r["DESCRIPTION"],
-      //     //   Manufacturer: r["MANUFACTURER PART NR."],
-      //     //   AvailableStock: r["AVAILABLE STOCK (FREE STOCK), M, PC"],
-      //     //   AvailableCU: r["AVAILABLE €CU INCLUDED"],
-      //     //   RangeOfCoverage: r["RANGE OF COVERAGE IN MONTHS"],
-      //     //   PN: r["PN"],
-      //     //   Customer: r["CUSTOMER"],
-      //     //   EndCustomer: r["END CUSTOMER"],
-      //     //   LastConsumptionDate: this._formatExcelDate(r["LAST CONSUMPTION"]),
-      //     //   Reason: r["REASON"],
-      //     //   Caused: r["CAUSED"],
-      //     //   Weight: r["WEIGHT (ON BASE UNIT)"],
-      //     //   TotalAmount: r["TOTAL AMOUNT"]
-      //     // };
-      //     return {
-      //       RFQID: this._toString(r["RFQ - ID"]),
-      //       Plant: r["PLANT"],
-      //       Component: r["COMPONENT"],
-      //       Description: r["DESCRIPTION"],
-      //       Manufacturer: this._toString(
-      //         r["MANUFACTURER PART NR."]
-      //       ),
-      //       AvailableStock: this._toDecimal(
-      //         r["AVAILABLE STOCK (FREE STOCK), M, PC"]
-      //       ),
-
-      //       AvailableCU: this._toDecimal(
-      //         r["AVAILABLE € CU INCLUDED"]
-      //       ),
-
-      //       //   AvailableCU: this._toDecimal(
-      //       //   r["\\"AVAILABLE € ↵CU INCLUDED\\"]
-      //       // ),
-
-      //       RangeOfCoverage: this._toDecimal(
-      //         r["RANGE OF COVERAGE IN MONTHS"]
-      //       ),
-
-      //       PN: r["PN"],
-      //       Customer: r["CUSTOMER"],
-      //       EndCustomer: r["END CUSTOMER"],
-      //       LastConsumptionDate: this._formatExcelDate(
-      //         r["LAST CONSUMPTION"]
-      //       ),
-      //       Reason: r["REASON"],
-      //       Caused: r["CAUSED"],
-      //       Weight: this._toDecimal(
-      //         r["WEIGHT (ON BASE UNIT)"]
-      //       ),
-      //       TotalAmount: this._toDecimal(
-      //         r["TOTAL AMOUNT"]
-      //       )
-      //     };
-
-      //   });
-
-      //   return mappedItems;
-      // },
 
 
       _validateAndMapExcel: function (excelData) {
@@ -582,47 +391,6 @@ sap.ui.define(
 
 
 
-      // onUpload: async function (sFileName) {
-      //   try {
-      //     const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7"; // from /browser
-      //     const folderName = sFileName + this._generateUUID();
-
-
-      //     const formData = new FormData();
-      //     formData.append("cmisaction", "createFolder");
-      //     formData.append("propertyId[0]", "cmis:name");
-      //     formData.append("propertyValue[0]", folderName);
-      //     formData.append("propertyId[1]", "cmis:objectTypeId");
-      //     formData.append("propertyValue[1]", "cmis:folder");
-      //     formData.append("succinct", true);
-
-
-
-      //     $.ajax({
-      //       url: this._getWorkflowRuntimeBaseURLTest() + `/${repositoryId}/root`,
-      //       method: "POST",
-      //       data: formData,
-      //       processData: false,
-      //       contentType: false,
-      //       async:false,
-      //       headers: {
-      //         "X-CSRF-Token": this._fetchToken(),
-      //       },
-
-      //       success: function (data) {
-      //         return `${data.succinctProperties["cmis:objectId"]}`
-      //       },
-      //       error: function (err) {
-      //         return "";
-      //       }
-      //     });
-      //   } catch (err) {
-      //     console.error(err);
-      //     MessageBox.error("Failed to create folder");
-      //   }
-      // },
-
-
       onUpload: function (sFolderName) {
         return new Promise((resolve, reject) => {
           try {
@@ -667,55 +435,6 @@ sap.ui.define(
           return v.toString(16);
         });
       },
-
-
-      // onUploadDocument: function (oFile, sFileName, sFolderObjectId) {
-      //   try {
-      //     const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7";
-
-      //     const formData = new FormData();
-      //     formData.append("cmisaction", "createDocument");
-
-      //     // CMIS properties
-      //     formData.append("propertyId[0]", "cmis:name");
-      //     formData.append("propertyValue[0]", sFileName);
-
-      //     formData.append("propertyId[1]", "cmis:objectTypeId");
-      //     formData.append("propertyValue[1]", "cmis:document");
-
-      //     // Optional but recommended
-      //     formData.append("_charset_", "UTF-8");
-      //     formData.append("succinct", true);
-
-      //     // File content
-      //     formData.append("media", oFile);
-
-      //     $.ajax({
-      //       url: this._getWorkflowRuntimeBaseURLTest() +
-      //         `/${repositoryId}/${sFolderObjectId}`,
-      //       method: "POST",
-      //       data: formData,
-      //       processData: false,
-      //       contentType: false,
-      //       headers: {
-      //         "X-CSRF-Token": this._fetchToken()
-      //       },
-      //       success: function (data) {
-      //         const documentId = data.succinctProperties["cmis:objectId"];
-      //         sap.m.MessageToast.show("Document uploaded successfully");
-      //         console.log("Document ID:", documentId);
-      //       },
-      //       error: function (err) {
-      //         console.error(err);
-      //         sap.m.MessageBox.error("Failed to upload document");
-      //       }
-      //     });
-
-      //   } catch (e) {
-      //     console.error(e);
-      //     sap.m.MessageBox.error("Unexpected error during upload");
-      //   }
-      // },
 
 
       onUploadDocument: function (oFile, sFileName, sFolderObjectId) {

@@ -4,31 +4,17 @@ specVersion: "2.5"
 metadata:
   name: obsolerteworkflow.workflowuimodule
 type: application
-framework:
-  name: SAPUI5
-  version: 1.82.2
-  libraries:
-    - name: sap.m
-    - name: sap.ui.core
-    - name: sap.f
-    - name: sap.suite.ui.generic.template
-    - name: sap.ui.comp
-    - name: sap.ui.generic.app
-    - name: sap.ui.table
-    - name: sap.ushell
-    - name: themelib_sap_fiori_3
 server:
   customMiddleware:
-    - name: fiori-tools-appreload
-      afterMiddleware: compression
-      configuration:
-        port: 35729
-        path: webapp
-        delay: 300
     - name: fiori-tools-proxy
       afterMiddleware: compression
       configuration:
         ignoreCertError: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
         backend:
           - path: /sap
             url: http://localhost
@@ -36,6 +22,12 @@ server:
             authenticationType: OAuth2UserTokenExchange
             destination: OBSOLETE_REPORT
             path: /odata/v2/obsolete/
+    - name: fiori-tools-appreload
+      afterMiddleware: compression
+      configuration:
+        port: 35729
+        path: webapp
+        delay: 300
     - name: fiori-tools-preview
       afterMiddleware: fiori-tools-appreload
       configuration:

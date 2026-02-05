@@ -1,135 +1,149 @@
 {
-    "_version": "1.26.0",
-    "sap.app": {
-        "id": "obsolerteworkflow.workflowuimodule",
-        "type": "application",
-        "i18n": "i18n/i18n.properties",
-        "applicationVersion": {
-            "version": "0.0.1"
-        },
-        "title": "{{appTitle}}",
-        "description": "{{appDescription}}",
-        "resources": "resources.json",
-        "sourceTemplate": {
-            "id": "@sap/generator-fiori:basic",
-            "version": "1.8.4",
-            "toolsId": "24f7bffd-713b-4cec-97c7-d84a95032acb"
-        },
-        "dataSources": {
-            "mainService": {
-                "uri": "/sap/opu/odata/",
-                "type": "OData",
-                "settings": {
-                    "annotations": [],
-                    "localUri": "localService/metadata.xml",
-                    "odataVersion": "2.0"
-                }
-            }
-        },
-        "crossNavigation": {
-            "inbounds": {
-                "Obsolete": {
-                    "semanticObject": "MyObsoletreWorkflow",
-                    "action": "Start",
-                    "title": "Obsolete",
-                    "subTitle": "workflow"
-                }
-            }
-        }
+  "_version": "1.26.0",
+  "sap.app": {
+    "id": "obsolerteworkflow.workflowuimodule",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
     },
-    "sap.ui": {
-        "technology": "UI5",
-        "icons": {
-            "icon": "",
-            "favIcon": "",
-            "phone": "",
-            "phone@2": "",
-            "tablet": "",
-            "tablet@2": ""
-        },
-        "deviceTypes": {
-            "desktop": true,
-            "tablet": true,
-            "phone": true
-        }
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.8.4",
+      "toolsId": "24f7bffd-713b-4cec-97c7-d84a95032acb"
     },
-    "sap.ui5": {
-        "flexEnabled": false,
-        "dependencies": {
-            "minUI5Version": "1.82.2",
-            "libs": {
-                "sap.m": {},
-                "sap.ui.core": {},
-                "sap.f": {},
-                "sap.suite.ui.generic.template": {},
-                "sap.ui.comp": {},
-                "sap.ui.generic.app": {},
-                "sap.ui.table": {},
-                "sap.ushell": {}
-            }
-        },
-        "contentDensities": {
-            "compact": true,
-            "cozy": true
-        },
-        "models": {
-            "i18n": {
-                "type": "sap.ui.model.resource.ResourceModel",
-                "settings": {
-                    "bundleName": "obsolerteworkflow.workflowuimodule.i18n.i18n"
-                }
-            },
-            "": {
-                "dataSource": "mainService",
-                "preload": true,
-                "settings": {}
-            }
-        },
-        "resources": {
-            "css": [
-                {
-                    "uri": "css/style.css"
-                }
-            ]
-        },
-        "routing": {
-            "config": {
-                "routerClass": "sap.m.routing.Router",
-                "viewType": "XML",
-                "async": true,
-                "viewPath": "obsolerteworkflow.workflowuimodule.view",
-                "controlAggregation": "pages",
-                "controlId": "app",
-                "clearControlAggregation": false
-            },
-            "routes": [
-                {
-                    "name": "RouteMyStartUI",
-                    "pattern": ":?query:",
-                    "target": [
-                        "TargetMyStartUI"
-                    ]
-                }
-            ],
-            "targets": {
-                "TargetMyStartUI": {
-                    "viewType": "XML",
-                    "transition": "slide",
-                    "clearControlAggregation": false,
-                    "viewId": "MyStartUI",
-                    "viewName": "MyStartUI"
-                }
-            }
-        },
-        "rootView": {
-            "viewName": "obsolerteworkflow.workflowuimodule.view.App",
-            "type": "XML",
-            "async": true,
-            "id": "App"
+    "dataSources": {
+      "mainService": {
+        "uri": "/sap/opu/odata/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/mainService/metadata.xml",
+          "odataVersion": "2.0"
         }
+      },
+      "obsolete": {
+        "uri": "/odata/v2/obsolete/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/obsolete/metadata.xml",
+          "odataVersion": "2.0"
+        }
+      }
     },
-    "sap.cloud": {
-        "public": true,
-        "service": "Obsolete"
+    "crossNavigation": {
+      "inbounds": {
+        "Obsolete": {
+          "semanticObject": "MyObsoletreWorkflow",
+          "action": "Start",
+          "title": "Obsolete",
+          "subTitle": "workflow"
+        }
+      }
     }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": false,
+    "dependencies": {
+      "minUI5Version": "1.82.2",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.f": {},
+        "sap.suite.ui.generic.template": {},
+        "sap.ui.comp": {},
+        "sap.ui.generic.app": {},
+        "sap.ui.table": {},
+        "sap.ushell": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "obsolerteworkflow.workflowuimodule.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
+      },
+      "obsolete": {
+        "dataSource": "obsolete",
+        "preload": true,
+        "settings": {}
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "async": true,
+        "viewPath": "obsolerteworkflow.workflowuimodule.view",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "clearControlAggregation": false
+      },
+      "routes": [
+        {
+          "name": "RouteMyStartUI",
+          "pattern": ":?query:",
+          "target": [
+            "TargetMyStartUI"
+          ]
+        }
+      ],
+      "targets": {
+        "TargetMyStartUI": {
+          "viewType": "XML",
+          "transition": "slide",
+          "clearControlAggregation": false,
+          "viewId": "MyStartUI",
+          "viewName": "MyStartUI"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "obsolerteworkflow.workflowuimodule.view.App",
+      "type": "XML",
+      "async": true,
+      "id": "App"
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "Obsolete"
+  }
 }

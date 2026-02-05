@@ -7,7 +7,7 @@
     xmlns:u="sap.ui.unified"
     displayBlock="true"
 >
-     <App id="app1">
+    <App id="app1">
         <Page
             title="Create Workflow Item"
             class="sapUiContentPadding"
@@ -40,21 +40,18 @@
                         width="100%"
                         class="sapUiSmallMarginBottom"
                         selectedKey="{/company}"
+                        forceSelection="false"
+                        items="{
+    path: 'obsolete>/Companies',
+    filters: [
+      { path: 'isActive', operator: 'EQ', value1: true }
+    ]
+  }"
                     >
-                        <items>
-                            <core:Item
-                                key="1000"
-                                text="Company 1000"
-                            />
-                            <core:Item
-                                key="2000"
-                                text="Company 2000"
-                            />
-                            <core:Item
-                                key="3000"
-                                text="Company 3000"
-                            />
-                        </items>
+                        <core:Item
+                            key="{obsolete>companyCode}"
+                            text="{= ${obsolete>companyCode} + ' - ' + ${obsolete>companyName} }"
+                        />
                     </Select>
 
                     <!-- Excel File Upload -->

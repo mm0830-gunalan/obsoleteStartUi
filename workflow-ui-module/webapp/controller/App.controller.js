@@ -28,7 +28,8 @@ sap.ui.define(
       ],
 
 
-      onInit() {
+      onInit() { 
+        const oModel = this.getView().getModel("obsolete");
       },
       _normalizeColumnName: function (col) {
         return col
@@ -38,47 +39,96 @@ sap.ui.define(
           .toUpperCase();
       },
 
-      startWorkflowInstance: function (oPayload, folderIdCmis,docId) {
-        var model = this.getView().getModel();
-        let data = {
-          "definitionId": "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
-          "context": {
-            // "obsoleteitems": oPayload,
-            "company": this.byId("companySelect").getSelectedKey(),
-            "file": folderIdCmis,
-            "documentid":docId
-          }
-        }
+      // startWorkflowInstance1: function (oPayload, folderIdCmis, docId) {
+      //   var model = this.getView().getModel();
+      //   let data = {
+      //     "definitionId": "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
+      //     "context": {
+      //       // "obsoleteitems": oPayload,
+      //       "company": this.byId("companySelect").getSelectedKey(),
+      //       "file": folderIdCmis,
+      //       "documentid": docId
+      //     }
+      //   }
 
-        $.ajax({
-          url: this._getWorkflowRuntimeBaseURL() + "/workflow-instances?environmentId=businessprocessworkflow",
-          method: "POST",
-          async: false,
-          contentType: "application/json",
-          headers: {
-            "X-CSRF-Token": this._fetchToken(),
-          },
-          data: JSON.stringify(data),
-          // success: function (result, xhr, data) {
-          // },
-          success: function (result) {
-            sap.m.MessageBox.success(
-              "Submitted successfully",
-              {
-                title: "Success",
-                onClose: function () {
-                  this._resetForm();
-                }.bind(this)
+      //   $.ajax({
+      //     url: this._getWorkflowRuntimeBaseURL() + "/workflow-instances?environmentId=businessprocessworkflow",
+      //     method: "POST",
+      //     async: false,
+      //     contentType: "application/json",
+      //     headers: {
+      //       "X-CSRF-Token": this._fetchToken(),
+      //     },
+      //     data: JSON.stringify(data),
+      //     // success: function (result, xhr, data) {
+      //     // },
+      //     success: function (result) {
+      //       sap.m.MessageBox.success(
+      //         "Submitted successfully",
+      //         {
+      //           title: "Success",
+      //           onClose: function () {
+      //             this._resetForm();
+      //           }.bind(this)
+      //         }
+      //       );
+      //     }.bind(this),
+      //     error: function (request, status, error) {
+      //       var response = JSON.parse(request.responseText);
+      //       MessageBox.error(response.error.message);
+      //     },
+      //   });
+      // },
+
+      startWorkflowInstance: function (oPayload, folderIdCmis, docId) {
+        var that = this;
+
+        return new Promise(function (resolve, reject) {
+          let data = {
+            definitionId: "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
+            context: {
+              company: that.byId("companySelect").getSelectedKey(),
+              file: folderIdCmis,
+              documentid: docId
+            }
+          };
+
+          $.ajax({
+            url: that._getWorkflowRuntimeBaseURL() +
+              "/workflow-instances?environmentId=businessprocessworkflow",
+            method: "POST",
+            contentType: "application/json",
+            headers: {
+              "X-CSRF-Token": that._fetchToken()
+            },
+            data: JSON.stringify(data),
+
+            success: function (result) {
+              sap.m.MessageBox.success(
+                "Submitted successfully",
+                {
+                  title: "Success",
+                  onClose: function () {
+                    that._resetForm();
+                  }
+                }
+              );
+              resolve(result);   // ✅ Promise resolved
+            },
+
+            error: function (request) {
+              try {
+                var response = JSON.parse(request.responseText);
+                MessageBox.error(response.error.message);
+                reject(response);
+              } catch (e) {
+                MessageBox.error("Workflow start failed");
+                reject(e);
               }
-            );
-          }.bind(this),
-          error: function (request, status, error) {
-            var response = JSON.parse(request.responseText);
-            MessageBox.error(response.error.message);
-          },
+            }
+          });
         });
       },
-
       _fetchToken: function () {
         var fetchedToken;
 
@@ -125,9 +175,14 @@ sap.ui.define(
 
       onSubmit: function () {
         // var oUploader = this.byId("excelUploader");
+
+        //Busy  first
+        var oView = this.getView();
+        oView.setBusy(true);   // 
         var oUploader = this.byId("excelUploader");
 
         if (!oUploader || !oUploader.oFileUpload || !oUploader.oFileUpload.files.length) {
+          oView.setBusy(false);
           MessageBox.error("Please upload an Excel file");
           return;
         }
@@ -137,6 +192,7 @@ sap.ui.define(
 
 
         if (!oFile) {
+          oView.setBusy(false);
           MessageBox.error("Please upload an Excel file");
           return;
         }
@@ -165,7 +221,13 @@ sap.ui.define(
             var payloadData = this._validateAndMapExcel(excelData);
             console.log("Mapped Payload:", payloadData);
 
+            const selectedCompany = this.byId("companySelect").getSelectedKey();
 
+            oView.setBusy(false);
+            if(selectedCompany==='')
+            {
+              return MessageBox.error("Select the company code");
+            }
             MessageBox.confirm(
               "Excel validated successfully.\n\nAre you sure you want to submit?",
               {
@@ -174,15 +236,16 @@ sap.ui.define(
                 emphasizedAction: sap.m.MessageBox.Action.YES,
                 onClose: async function (oAction) {
                   if (oAction === sap.m.MessageBox.Action.YES) {
+                    oView.setBusy(true);
                     try {
-                      const folderId = await this.onUpload(sFileName); // ✅ WAIT HERE
+                      const folderId = await this.onUpload(sFileName); //  WAIT HERE
 
                       if (folderId) {
                         const docId = await this.onUploadDocument(oFile, sOrgFileName, sFileName);
 
                         const folderIdCmis = `spa-res:cmis:folderid:${folderId}`
 
-                        this.startWorkflowInstance(payloadData, folderIdCmis,docId);
+                        await this.startWorkflowInstance(payloadData, folderIdCmis, docId);
                       } else {
                         sap.m.MessageToast.show("Failed to create folder");
                       }
@@ -190,6 +253,8 @@ sap.ui.define(
                     } catch (err) {
                       console.error(err);
                       MessageBox.error("Folder creation failed");
+                    } finally {
+                      oView.setBusy(false);   // BUSY OFF
                     }
                   }
                 }.bind(this)
@@ -199,6 +264,7 @@ sap.ui.define(
 
 
           } catch (err) {
+            oView.setBusy(false);
             MessageBox.error(err.message);
           }
         };

@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+        <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+        <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+    </edmx:Reference>
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="ObsoleteService" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <Annotation Term="Core.Links" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Collection>
+                    <Record>
+                        <PropertyValue Property="rel" String="author"/>
+                        <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+                    </Record>
+                </Collection>
+            </Annotation>
+            <EntityContainer Name="EntityContainer" m:IsDefaultEntityContainer="true">
+                <EntitySet Name="WorkflowHeader" EntityType="ObsoleteService.WorkflowHeader"/>
+                <EntitySet Name="WorkflowItem" EntityType="ObsoleteService.WorkflowItem"/>
+                <EntitySet Name="Users" EntityType="ObsoleteService.Users"/>
+                <EntitySet Name="Roles" EntityType="ObsoleteService.Roles"/>
+                <EntitySet Name="Companies" EntityType="ObsoleteService.Companies"/>
+                <EntitySet Name="UserCompanyRoles" EntityType="ObsoleteService.UserCompanyRoles"/>
+                <FunctionImport Name="importDmsData" ReturnType="ObsoleteService.ImportResult" m:HttpMethod="POST">
+                    <Parameter Name="dmsId" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="createdBy" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="workflowInstanceId" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="companyCode" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <FunctionImport Name="bulkUpdateWorkflowItems" ReturnType="Edm.String" m:HttpMethod="POST">
+                    <Parameter Name="workflowId" Type="Edm.String" Mode="In" Nullable="true"/>
+                    <Parameter Name="items" Type="Collection(ObsoleteService.WorkflowItem)" Nullable="true" Mode="In"/>
+                </FunctionImport>
+                <FunctionImport Name="getCompanyRoleUsers" ReturnType="ObsoleteService.CompanyRoleUsers" m:HttpMethod="POST">
+                    <Parameter Name="companyCode" Type="Edm.String" Mode="In" Nullable="true"/>
+                </FunctionImport>
+                <AssociationSet Name="WorkflowHeader_items" Association="ObsoleteService.WorkflowHeader_items">
+                    <End Role="WorkflowHeader" EntitySet="WorkflowHeader"/>
+                    <End Role="WorkflowItem" EntitySet="WorkflowItem"/>
+                </AssociationSet>
+                <AssociationSet Name="UserCompanyRoles_user" Association="ObsoleteService.UserCompanyRoles_user">
+                    <End Role="UserCompanyRoles" EntitySet="UserCompanyRoles"/>
+                    <End Role="Users" EntitySet="Users"/>
+                </AssociationSet>
+                <AssociationSet Name="UserCompanyRoles_company" Association="ObsoleteService.UserCompanyRoles_company">
+                    <End Role="UserCompanyRoles" EntitySet="UserCompanyRoles"/>
+                    <End Role="Companies" EntitySet="Companies"/>
+                </AssociationSet>
+                <AssociationSet Name="UserCompanyRoles_role" Association="ObsoleteService.UserCompanyRoles_role">
+                    <End Role="UserCompanyRoles" EntitySet="UserCompanyRoles"/>
+                    <End Role="Roles" EntitySet="Roles"/>
+                </AssociationSet>
+            </EntityContainer>
+            <EntityType Name="WorkflowHeader">
+                <Key>
+                    <PropertyRef Name="workflowId"/>
+                </Key>
+                <Property Name="workflowId" Type="Edm.String" MaxLength="36" Nullable="false"/>
+                <Property Name="status" Type="Edm.String" MaxLength="10"/>
+                <Property Name="companyCode" Type="Edm.String" MaxLength="20"/>
+                <Property Name="dmsId" Type="Edm.String" MaxLength="50"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+                <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+                <NavigationProperty Name="items" Relationship="ObsoleteService.WorkflowHeader_items" FromRole="WorkflowHeader" ToRole="WorkflowItem"/>
+            </EntityType>
+            <EntityType Name="WorkflowItem">
+                <Key>
+                    <PropertyRef Name="ID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+                <Property Name="workflowId" Type="Edm.String" MaxLength="36"/>
+                <Property Name="rfqId" Type="Edm.String" MaxLength="100"/>
+                <Property Name="plant" Type="Edm.String" MaxLength="50"/>
+                <Property Name="component" Type="Edm.String" MaxLength="100"/>
+                <Property Name="description" Type="Edm.String" MaxLength="255"/>
+                <Property Name="manufacturerPart" Type="Edm.String" MaxLength="100"/>
+                <Property Name="availableStock" Type="Edm.Decimal" Precision="15" Scale="4"/>
+                <Property Name="availableCu" Type="Edm.Decimal" Precision="15" Scale="4"/>
+                <Property Name="lastConsumption" Type="Edm.DateTime" sap:display-format="Date"/>
+                <Property Name="rangeCoverage" Type="Edm.Decimal" Precision="10" Scale="4"/>
+                <Property Name="pn" Type="Edm.String" MaxLength="100"/>
+                <Property Name="customer" Type="Edm.String" MaxLength="100"/>
+                <Property Name="endCustomer" Type="Edm.String" MaxLength="100"/>
+                <Property Name="reason" Type="Edm.Int32"/>
+                <Property Name="caused" Type="Edm.String" MaxLength="50"/>
+                <Property Name="weight" Type="Edm.Decimal" Precision="15" Scale="4"/>
+                <Property Name="totalAmount" Type="Edm.Decimal" Precision="15" Scale="4"/>
+                <Property Name="decisionFlow" Type="Edm.String" MaxLength="50"/>
+                <Property Name="handling" Type="Edm.String" MaxLength="50"/>
+                <Property Name="scrapDecision" Type="Edm.String" MaxLength="50"/>
+                <Property Name="internalUse" Type="Edm.Boolean"/>
+                <Property Name="sellToSubsidiary" Type="Edm.Boolean"/>
+                <Property Name="customerResponse" Type="Edm.String" MaxLength="50"/>
+                <Property Name="status" Type="Edm.String" MaxLength="50"/>
+                <Property Name="isActive" Type="Edm.Boolean"/>
+                <Property Name="commentHandling" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="commentScrap" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="commentAlternative" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="commentSubsidiary" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="commentComponent" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="comment" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+                <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="Users">
+                <Key>
+                    <PropertyRef Name="userID"/>
+                </Key>
+                <Property Name="userID" Type="Edm.Guid" Nullable="false"/>
+                <Property Name="email" Type="Edm.String" MaxLength="255"/>
+                <Property Name="isActive" Type="Edm.Boolean"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+                <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="Roles">
+                <Key>
+                    <PropertyRef Name="roleID"/>
+                </Key>
+                <Property Name="roleID" Type="Edm.String" MaxLength="50" Nullable="false"/>
+                <Property Name="roleName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="isActive" Type="Edm.Boolean"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+                <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="Companies">
+                <Key>
+                    <PropertyRef Name="companyCode"/>
+                </Key>
+                <Property Name="companyCode" Type="Edm.String" MaxLength="50" Nullable="false"/>
+                <Property Name="companyName" Type="Edm.String" MaxLength="255"/>
+                <Property Name="isActive" Type="Edm.Boolean"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+                <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="UserCompanyRoles">
+                <Key>
+                    <PropertyRef Name="assignmentID"/>
+                </Key>
+                <Property Name="assignmentID" Type="Edm.Guid" Nullable="false"/>
+                <Property Name="userID" Type="Edm.Guid"/>
+                <Property Name="companyCode" Type="Edm.String" MaxLength="50"/>
+                <Property Name="roleID" Type="Edm.String" MaxLength="50"/>
+                <NavigationProperty Name="user" Relationship="ObsoleteService.UserCompanyRoles_user" FromRole="UserCompanyRoles" ToRole="Users"/>
+                <NavigationProperty Name="company" Relationship="ObsoleteService.UserCompanyRoles_company" FromRole="UserCompanyRoles" ToRole="Companies"/>
+                <NavigationProperty Name="role" Relationship="ObsoleteService.UserCompanyRoles_role" FromRole="UserCompanyRoles" ToRole="Roles"/>
+                <Property Name="isActive" Type="Edm.Boolean"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+                <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <ComplexType Name="ImportResult">
+                <Property Name="success" Type="Edm.Boolean"/>
+                <Property Name="message" Type="Edm.String"/>
+                <Property Name="workflowId" Type="Edm.String"/>
+                <Property Name="companyCode" Type="Edm.String"/>
+                <Property Name="dmsId" Type="Edm.String"/>
+                <Property Name="itemCount" Type="Edm.Int32"/>
+                <Property Name="status" Type="Edm.String"/>
+                <Property Name="plantCount" Type="Edm.Int32"/>
+                <Property Name="customerCount" Type="Edm.Int32"/>
+            </ComplexType>
+            <ComplexType Name="EmailEntry">
+                <Property Name="email" Type="Edm.String"/>
+            </ComplexType>
+            <ComplexType Name="CompanyRoleUsers">
+                <Property Name="HSCM" Type="Collection(ObsoleteService.EmailEntry)" Nullable="true"/>
+                <Property Name="LA" Type="Collection(ObsoleteService.EmailEntry)" Nullable="true"/>
+                <Property Name="HPE" Type="Collection(ObsoleteService.EmailEntry)" Nullable="true"/>
+                <Property Name="CSPE" Type="Collection(ObsoleteService.EmailEntry)" Nullable="true"/>
+                <Property Name="FC" Type="Collection(ObsoleteService.EmailEntry)" Nullable="true"/>
+            </ComplexType>
+            <Association Name="WorkflowHeader_items">
+                <End Role="WorkflowHeader" Type="ObsoleteService.WorkflowHeader" Multiplicity="1">
+                    <OnDelete Action="Cascade"/>
+                </End>
+                <End Role="WorkflowItem" Type="ObsoleteService.WorkflowItem" Multiplicity="*"/>
+            </Association>
+            <Association Name="UserCompanyRoles_user">
+                <End Role="UserCompanyRoles" Type="ObsoleteService.UserCompanyRoles" Multiplicity="*"/>
+                <End Role="Users" Type="ObsoleteService.Users" Multiplicity="0..1"/>
+                <ReferentialConstraint>
+                    <Principal Role="Users">
+                        <PropertyRef Name="userID"/>
+                    </Principal>
+                    <Dependent Role="UserCompanyRoles">
+                        <PropertyRef Name="userID"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="UserCompanyRoles_company">
+                <End Role="UserCompanyRoles" Type="ObsoleteService.UserCompanyRoles" Multiplicity="*"/>
+                <End Role="Companies" Type="ObsoleteService.Companies" Multiplicity="0..1"/>
+                <ReferentialConstraint>
+                    <Principal Role="Companies">
+                        <PropertyRef Name="companyCode"/>
+                    </Principal>
+                    <Dependent Role="UserCompanyRoles">
+                        <PropertyRef Name="companyCode"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="UserCompanyRoles_role">
+                <End Role="UserCompanyRoles" Type="ObsoleteService.UserCompanyRoles" Multiplicity="*"/>
+                <End Role="Roles" Type="ObsoleteService.Roles" Multiplicity="0..1"/>
+                <ReferentialConstraint>
+                    <Principal Role="Roles">
+                        <PropertyRef Name="roleID"/>
+                    </Principal>
+                    <Dependent Role="UserCompanyRoles">
+                        <PropertyRef Name="roleID"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Annotations Target="ObsoleteService.WorkflowHeader/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.WorkflowHeader/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.WorkflowItem/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.WorkflowItem/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.WorkflowItem/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Users/userID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Users/email" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Users/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Users/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Roles/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Roles/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Companies/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.Companies/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.UserCompanyRoles/assignmentID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.UserCompanyRoles/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="ObsoleteService.UserCompanyRoles/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

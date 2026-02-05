@@ -18,6 +18,10 @@ server:
         backend:
           - path: /sap
             url: http://localhost
+          - url: https://lapp-service-gmbh-builddevlapp-dev-obsolete-report-srv.cfapps.eu10-004.hana.ondemand.com
+            authenticationType: OAuth2UserTokenExchange
+            destination: OBSOLETE_REPORT
+            path: /odata/v2/obsolete/
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

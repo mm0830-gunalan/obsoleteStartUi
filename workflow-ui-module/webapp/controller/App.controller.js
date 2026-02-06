@@ -28,7 +28,7 @@ sap.ui.define(
       ],
 
 
-      onInit() { 
+      onInit() {
         const oModel = this.getView().getModel("obsolete");
       },
       _normalizeColumnName: function (col) {
@@ -164,7 +164,7 @@ sap.ui.define(
         // Reset FileUploader
         var oUploader = this.byId("excelUploader");
         if (oUploader) {
-          oUploader.clear(); // ✅ removes last attached file
+          oUploader.clear(); //  removes last attached file
         }
 
         // Optional: clear stored file reference
@@ -202,7 +202,7 @@ sap.ui.define(
         const sOrgFileName = oFile.name;
 
         var reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           var workbook = XLSX.read(e.target.result, { type: "binary" });
           var sheetName = workbook.SheetNames[0];
           var sheet = workbook.Sheets[sheetName];
@@ -219,13 +219,52 @@ sap.ui.define(
 
           try {
             var payloadData = this._validateAndMapExcel(excelData);
-            console.log("Mapped Payload:", payloadData);
+
+
+                      //Commenting for testing thsi is current component check
+
+            // const aLocalDuplicates = this._validateLocalDuplicates(payloadData);
+
+            // if (aLocalDuplicates.length > 0) {
+            //   oView.setBusy(false);
+
+            //   const aMessages = aLocalDuplicates.map(
+            //     d => `Plant: ${d.plant}, Component: ${d.component}`
+            //   );
+
+            //   MessageBox.error(
+            //     "Duplicate entries found in uploaded file:\n\n" +
+            //     aMessages.join("\n")
+            //   );
+            //   return;
+            // }
+
+                        //Commenting for testing this  is  component check in DB level
+            // const aDuplicateComponent = await this._validateComponent(payloadData);
+
+            // // Extract actual results from OData V2 response
+            // const aDuplicates = aDuplicateComponent?.d?.results || [];
+
+            // if (aDuplicates.length > 0) {
+            //   oView.setBusy(false);
+
+            //   const aMessages = aDuplicates.map(
+            //     d => `Plant: ${d.plant}, Component: ${d.component}`
+            //   );
+
+            //   MessageBox.error(
+            //     "These components already exist in the system:\n\n" +
+            //     aMessages.join("\n")
+            //   );
+
+            //   return;
+            // }
+
 
             const selectedCompany = this.byId("companySelect").getSelectedKey();
 
             oView.setBusy(false);
-            if(selectedCompany==='')
-            {
+            if (selectedCompany === '') {
               return MessageBox.error("Select the company code");
             }
             MessageBox.confirm(
@@ -271,6 +310,61 @@ sap.ui.define(
 
         reader.readAsBinaryString(oFile);
       },
+
+      _validateComponent: function (aPayload) {
+        const oModel = this.getView().getModel("obsolete");
+        const csrfToken = oModel.getSecurityToken();
+        const serviceUrl = oModel.sServiceUrl;
+
+        // Get company code from view model
+        const companyCode = this.byId("companySelect").getSelectedKey();
+
+        // Transform payload to required structure
+        const aCheckItems = aPayload.map(item => ({
+          companyCode: companyCode,
+          plant: item.Plant,
+          component: item.Component
+        }));
+
+        return new Promise((resolve, reject) => {
+          jQuery.ajax({
+            url: `${serviceUrl}/checkDuplicate`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+              items: aCheckItems
+            }),
+            headers: {
+              "X-CSRF-Token": csrfToken
+            },
+            success: resolve,
+            error: reject
+          });
+        });
+      },
+
+      _validateLocalDuplicates: function (aPayload) {
+        const map = {};
+        const duplicates = {};
+        const result = [];
+
+        aPayload.forEach(item => {
+          const key = `${item.Plant}__${item.Component}`;
+
+          if (map[key]) {
+            duplicates[key] = {
+              plant: item.Plant,
+              component: item.Component
+            };
+          } else {
+            map[key] = true;
+          }
+        });
+
+        return Object.values(duplicates);
+      },
+
+
 
 
       _normalizeExcelData: function (excelData) {

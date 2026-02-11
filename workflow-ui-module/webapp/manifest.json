@@ -39,7 +39,7 @@
       "inbounds": {
         "Obsolete": {
           "semanticObject": "MyObsoletreWorkflow",
-          "action": "Start",
+          "action": "open",
           "title": "Obsolete",
           "subTitle": "workflow"
         }

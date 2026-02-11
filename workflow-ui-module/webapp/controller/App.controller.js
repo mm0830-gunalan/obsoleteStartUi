@@ -15,7 +15,9 @@ sap.ui.define(
         "DESCRIPTION",
         "MANUFACTURERPARTNR.",
         "AVAILABLESTOCK(FREESTOCK),M,PC",
-        "AVAILABLE€CUINCLUDED",
+        // "AVAILABLE€CUINCLUDED",
+        "FREESTOCKFULLCOPPER",
+        "CURRENCY",
         "LASTCONSUMPTION",
         "RANGEOFCOVERAGEINMONTHS",
         "PN",
@@ -221,7 +223,7 @@ sap.ui.define(
             var payloadData = this._validateAndMapExcel(excelData);
 
 
-                      //Commenting for testing thsi is current component check
+            //Commenting for testing thsi is current component check
 
             // const aLocalDuplicates = this._validateLocalDuplicates(payloadData);
 
@@ -239,7 +241,7 @@ sap.ui.define(
             //   return;
             // }
 
-                        //Commenting for testing this  is  component check in DB level
+            //Commenting for testing this  is  component check in DB level
             // const aDuplicateComponent = await this._validateComponent(payloadData);
 
             // // Extract actual results from OData V2 response
@@ -441,8 +443,9 @@ sap.ui.define(
               r["AVAILABLESTOCK(FREESTOCK),M,PC"]
             ),
             AvailableCU: this._toDecimal(
-              r["AVAILABLE€CUINCLUDED"]
+              r["FREESTOCKFULLCOPPER"]
             ),
+            Currency:  r["CURRENCY"],
             RangeOfCoverage: this._toDecimal(
               r["RANGEOFCOVERAGEINMONTHS"]
             ),
@@ -576,7 +579,7 @@ sap.ui.define(
               },
               success: function (data) {
                 const folderId = data.succinctProperties["cmis:objectId"];
-                resolve(folderId); // ✅ THIS is the real return
+                resolve(folderId); //  THIS is the real return
               },
               error: function (err) {
                 reject(err);

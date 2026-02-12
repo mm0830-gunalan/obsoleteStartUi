@@ -57,6 +57,7 @@
                                 width="100%"
                                 selectedKey="{/company}"
                                 forceSelection="false"
+                                change="onCompanyChange"
                                 items="{
                                     path: 'obsolete>/Companies',
                                     filters: [
@@ -83,6 +84,7 @@
                                 width="100%"
                                 change="onFileChange"
                                 useMultipart="false"
+                                enabled="{view>/fileUploadEnabled}"
                             />
                         </f:SimpleForm>
                     </VBox>

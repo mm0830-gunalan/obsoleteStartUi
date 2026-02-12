@@ -42,6 +42,12 @@ sap.ui.define(
         this._sSearchQuery = "";
         this._bShowOnlyErrors = false;
 
+
+        const oViewModel = new sap.ui.model.json.JSONModel({
+          fileUploadEnabled: false
+        });
+        this.getView().setModel(oViewModel, "view");
+
       },
       // onShowErrors: function () {
       //   const aTestErrors = [
@@ -207,6 +213,10 @@ sap.ui.define(
         this._sSearchQuery = "";
         this._bShowOnlyErrors = false;
 
+        const oViewModel = this.getView().getModel("view");
+        if (oViewModel) {
+          oViewModel.setProperty("/fileUploadEnabled", false);
+        }
 
 
         // Optional: clear stored file reference
@@ -813,8 +823,17 @@ sap.ui.define(
         const oView = this.getView();
         const oFile = oEvent.getParameter("files")[0];
 
+        // If user removed the file (no file selected)
         if (!oFile) {
-          sap.m.MessageToast.show("No file selected");
+          const oTableModel = oView.getModel("WorkflowItem");
+          if (oTableModel) {
+            oTableModel.setProperty("/items", []);
+          }
+
+          // Reset search and error filter
+          this._sSearchQuery = "";
+          this._bShowOnlyErrors = false;
+
           return;
         }
 
@@ -1095,7 +1114,36 @@ sap.ui.define(
 
         // Apply all filters together
         oBinding.filter(aFilters);
+      },
+
+      onCompanyChange: function (oEvent) {
+        const sCompany = oEvent.getSource().getSelectedKey();
+        const oView = this.getView();
+        const oViewModel = oView.getModel("view");
+
+        // Enable uploader only if company selected
+        oViewModel.setProperty("/fileUploadEnabled", !!sCompany);
+
+        // Clear table data
+        const oTableModel = oView.getModel("WorkflowItem");
+        if (oTableModel) {
+          oTableModel.setProperty("/items", []);
+        }
+
+        // Clear file uploader
+        const oUploader = this.byId("excelUploader");
+        if (oUploader) {
+          oUploader.clear();
+        }
+
+        // Reset search + error filter states
+        this._sSearchQuery = "";
+        this._bShowOnlyErrors = false;
       }
+
+
+
+
 
 
 

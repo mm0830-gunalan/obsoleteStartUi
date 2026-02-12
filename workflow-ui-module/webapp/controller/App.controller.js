@@ -32,7 +32,35 @@ sap.ui.define(
 
       onInit() {
         const oModel = this.getView().getModel("obsolete");
+
+        const oItemModel = new sap.ui.model.json.JSONModel({
+          items: []
+        });
+
+        this.getView().setModel(oItemModel, "WorkflowItem");
+
+        this._sSearchQuery = "";
+        this._bShowOnlyErrors = false;
+
       },
+      // onShowErrors: function () {
+      //   const aTestErrors = [
+      //     {
+      //       error: "Invalid plant",
+      //       rfq: "RFQ001",
+      //       component: "COMP1001",
+      //       plant: "PL01"
+      //     },
+      //     {
+      //       error: "Missing component",
+      //       rfq: "RFQ002",
+      //       component: "",
+      //       plant: "PL02"
+      //     }
+      //   ];
+
+      //   this.getView().getModel("TestModel").setProperty("/items", aTestErrors);
+      // },
       _normalizeColumnName: function (col) {
         return col
           .replace(/\r?\n/g, " ")
@@ -82,7 +110,7 @@ sap.ui.define(
       //   });
       // },
 
-      startWorkflowInstance: function (oPayload, folderIdCmis, docId) {
+      startWorkflowInstance: function (folderIdCmis, docId) {
         var that = this;
 
         return new Promise(function (resolve, reject) {
@@ -169,150 +197,192 @@ sap.ui.define(
           oUploader.clear(); //  removes last attached file
         }
 
+        // Clear table data
+        const oModel = this.getView().getModel("WorkflowItem");
+        if (oModel) {
+          oModel.setProperty("/items", []);
+        }
+
+        // Reset search and checkbox state (optional but recommended)
+        this._sSearchQuery = "";
+        this._bShowOnlyErrors = false;
+
+
+
         // Optional: clear stored file reference
         this._selectedFile = null;
       },
 
 
 
-      onSubmit: function () {
-        // var oUploader = this.byId("excelUploader");
+      // onSubmit: function () {
 
-        //Busy  first
-        var oView = this.getView();
-        oView.setBusy(true);   // 
-        var oUploader = this.byId("excelUploader");
+      //   //Busy  first
+      //   var oView = this.getView();
+      //   oView.setBusy(true);   // 
+      //   var oUploader = this.byId("excelUploader");
+
+      //   if (!oUploader || !oUploader.oFileUpload || !oUploader.oFileUpload.files.length) {
+      //     oView.setBusy(false);
+      //     MessageBox.error("Please upload an Excel file");
+      //     return;
+      //   }
+
+      //   var oFile = oUploader.oFileUpload.files[0];
+
+      //   const sFileName = oFile.name + "_" + this._generateUUID();
+
+      //   const sOrgFileName = oFile.name;
+      //   try {
+      //     const selectedCompany = this.byId("companySelect").getSelectedKey();
+
+      //     oView.setBusy(false);
+      //     if (selectedCompany === '') {
+      //       return MessageBox.error("Select the company code");
+      //     }
+      //     MessageBox.confirm(
+      //       "Excel validated successfully.\n\nAre you sure you want to submit?",
+      //       {
+      //         title: "Confirm Submission",
+      //         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+      //         emphasizedAction: sap.m.MessageBox.Action.YES,
+      //         onClose: async function (oAction) {
+      //           if (oAction === sap.m.MessageBox.Action.YES) {
+      //             oView.setBusy(true);
+      //             try {
+      //               const folderId = await this.onUpload(sFileName); //  WAIT HERE
+
+      //               if (folderId) {
+      //                 const docId = await this.onUploadDocument(oFile, sOrgFileName, sFileName);
+
+      //                 const folderIdCmis = `spa-res:cmis:folderid:${folderId}`
+
+      //                 await this.startWorkflowInstance(folderIdCmis, docId);
+      //               } else {
+      //                 sap.m.MessageToast.show("Failed to create folder");
+      //               }
+
+      //             } catch (err) {
+      //               console.error(err);
+      //               MessageBox.error("Folder creation failed");
+      //             } finally {
+      //               oView.setBusy(false);   // BUSY OFF
+      //             }
+      //           }
+      //         }.bind(this)
+
+      //       }
+      //     );
+
+
+      //   } catch (err) {
+      //     oView.setBusy(false);
+      //     MessageBox.error(err.message);
+      //   }
+
+
+
+      // },
+
+      onSubmit: function () {
+
+        const oView = this.getView();
+        oView.setBusy(true);
+
+        // -------------------------------
+        // Check table for validation errors
+        // -------------------------------
+        const oModel = oView.getModel("WorkflowItem");
+        const aItems = oModel.getProperty("/items") || [];
+
+        const totalErrors = aItems.reduce(
+          (sum, item) => sum + (item.errorCount || 0),
+          0
+        );
+
+        if (totalErrors > 0) {
+          oView.setBusy(false);
+          sap.m.MessageBox.error(
+            `Table contains ${totalErrors} validation errors.\nPlease re-upload the file.`
+          );
+          return;
+        }
+
+        // -------------------------------
+        // File validation
+        // -------------------------------
+        const oUploader = this.byId("excelUploader");
 
         if (!oUploader || !oUploader.oFileUpload || !oUploader.oFileUpload.files.length) {
           oView.setBusy(false);
-          MessageBox.error("Please upload an Excel file");
+          sap.m.MessageBox.error("Please upload an Excel file");
           return;
         }
 
-        var oFile = oUploader.oFileUpload.files[0];
-
-
-
-        if (!oFile) {
-          oView.setBusy(false);
-          MessageBox.error("Please upload an Excel file");
-          return;
-        }
-
+        const oFile = oUploader.oFileUpload.files[0];
         const sFileName = oFile.name + "_" + this._generateUUID();
-
         const sOrgFileName = oFile.name;
 
-        var reader = new FileReader();
-        reader.onload = async (e) => {
-          var workbook = XLSX.read(e.target.result, { type: "binary" });
-          var sheetName = workbook.SheetNames[0];
-          var sheet = workbook.Sheets[sheetName];
+        try {
+          const selectedCompany = this.byId("companySelect").getSelectedKey();
 
-          // var excelData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-          var excelData = XLSX.utils.sheet_to_json(sheet, {
-            defval: "",
-            cellDates: true
-          });
+          oView.setBusy(false);
 
-          //  NORMALIZE ONCE HERE
-          excelData = this._normalizeExcelData(excelData);
-
-
-          try {
-            var payloadData = this._validateAndMapExcel(excelData);
-
-
-            //Commenting for testing thsi is current component check
-
-            // const aLocalDuplicates = this._validateLocalDuplicates(payloadData);
-
-            // if (aLocalDuplicates.length > 0) {
-            //   oView.setBusy(false);
-
-            //   const aMessages = aLocalDuplicates.map(
-            //     d => `Plant: ${d.plant}, Component: ${d.component}`
-            //   );
-
-            //   MessageBox.error(
-            //     "Duplicate entries found in uploaded file:\n\n" +
-            //     aMessages.join("\n")
-            //   );
-            //   return;
-            // }
-
-            //Commenting for testing this  is  component check in DB level
-            // const aDuplicateComponent = await this._validateComponent(payloadData);
-
-            // // Extract actual results from OData V2 response
-            // const aDuplicates = aDuplicateComponent?.d?.results || [];
-
-            // if (aDuplicates.length > 0) {
-            //   oView.setBusy(false);
-
-            //   const aMessages = aDuplicates.map(
-            //     d => `Plant: ${d.plant}, Component: ${d.component}`
-            //   );
-
-            //   MessageBox.error(
-            //     "These components already exist in the system:\n\n" +
-            //     aMessages.join("\n")
-            //   );
-
-            //   return;
-            // }
-
-
-            const selectedCompany = this.byId("companySelect").getSelectedKey();
-
-            oView.setBusy(false);
-            if (selectedCompany === '') {
-              return MessageBox.error("Select the company code");
-            }
-            MessageBox.confirm(
-              "Excel validated successfully.\n\nAre you sure you want to submit?",
-              {
-                title: "Confirm Submission",
-                actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-                emphasizedAction: sap.m.MessageBox.Action.YES,
-                onClose: async function (oAction) {
-                  if (oAction === sap.m.MessageBox.Action.YES) {
-                    oView.setBusy(true);
-                    try {
-                      const folderId = await this.onUpload(sFileName); //  WAIT HERE
-
-                      if (folderId) {
-                        const docId = await this.onUploadDocument(oFile, sOrgFileName, sFileName);
-
-                        const folderIdCmis = `spa-res:cmis:folderid:${folderId}`
-
-                        await this.startWorkflowInstance(payloadData, folderIdCmis, docId);
-                      } else {
-                        sap.m.MessageToast.show("Failed to create folder");
-                      }
-
-                    } catch (err) {
-                      console.error(err);
-                      MessageBox.error("Folder creation failed");
-                    } finally {
-                      oView.setBusy(false);   // BUSY OFF
-                    }
-                  }
-                }.bind(this)
-
-              }
-            );
-
-
-          } catch (err) {
-            oView.setBusy(false);
-            MessageBox.error(err.message);
+          if (selectedCompany === "") {
+            sap.m.MessageBox.error("Select the company code");
+            return;
           }
-        };
 
-        reader.readAsBinaryString(oFile);
+          sap.m.MessageBox.confirm(
+            "Excel validated successfully.\n\nAre you sure you want to submit?",
+            {
+              title: "Confirm Submission",
+              actions: [
+                sap.m.MessageBox.Action.YES,
+                sap.m.MessageBox.Action.NO
+              ],
+              emphasizedAction: sap.m.MessageBox.Action.YES,
+              onClose: async function (oAction) {
+
+                if (oAction === sap.m.MessageBox.Action.YES) {
+                  oView.setBusy(true);
+
+                  try {
+                    const folderId = await this.onUpload(sFileName);
+
+                    if (folderId) {
+                      const docId = await this.onUploadDocument(
+                        oFile,
+                        sOrgFileName,
+                        sFileName
+                      );
+
+                      const folderIdCmis = `spa-res:cmis:folderid:${folderId}`;
+
+                      await this.startWorkflowInstance(
+                        folderIdCmis,
+                        docId
+                      );
+                    } else {
+                      sap.m.MessageToast.show("Failed to create folder");
+                    }
+
+                  } catch (err) {
+                    console.error(err);
+                    sap.m.MessageBox.error("Submission failed");
+                  } finally {
+                    oView.setBusy(false);
+                  }
+                }
+              }.bind(this)
+            }
+          );
+
+        } catch (err) {
+          oView.setBusy(false);
+          sap.m.MessageBox.error(err.message);
+        }
       },
-
       _validateComponent: function (aPayload) {
         const oModel = this.getView().getModel("obsolete");
         const csrfToken = oModel.getSecurityToken();
@@ -410,65 +480,65 @@ sap.ui.define(
 
 
 
+      //Commenting this correct code
+      // _validateAndMapExcel: function (excelData) {
 
-      _validateAndMapExcel: function (excelData) {
+      //   if (!excelData.length) {
+      //     throw new Error("Excel file is empty");
+      //   }
 
-        if (!excelData.length) {
-          throw new Error("Excel file is empty");
-        }
+      //   this._REQUIRED_COLUMNS.forEach(col => {
+      //     if (!(col in excelData[0])) {
+      //       throw new Error(`Missing required column: ${col}`);
+      //     }
+      //   });
 
-        this._REQUIRED_COLUMNS.forEach(col => {
-          if (!(col in excelData[0])) {
-            throw new Error(`Missing required column: ${col}`);
-          }
-        });
+      //   return excelData.map((r, index) => {
 
-        return excelData.map((r, index) => {
+      //     this._REQUIRED_COLUMNS.forEach(col => {
+      //       if (r[col] === "" || r[col] === null || r[col] === undefined) {
+      //         throw new Error(
+      //           `Empty value in column "${col}" at row ${index + 2}`
+      //         );
+      //       }
+      //     });
 
-          this._REQUIRED_COLUMNS.forEach(col => {
-            if (r[col] === "" || r[col] === null || r[col] === undefined) {
-              throw new Error(
-                `Empty value in column "${col}" at row ${index + 2}`
-              );
-            }
-          });
-
-          return {
-            RFQID: this._toString(r["RFQ-ID"]),
-            Plant: r["PLANT"],
-            Component: r["COMPONENT"],
-            Description: r["DESCRIPTION"],
-            Manufacturer: this._toString(r["MANUFACTURERPARTNR."]),
-            AvailableStock: this._toDecimal(
-              r["AVAILABLESTOCK(FREESTOCK),M,PC"]
-            ),
-            AvailableCU: this._toDecimal(
-              r["FREESTOCKFULLCOPPER"]
-            ),
-            Currency:  r["CURRENCY"],
-            RangeOfCoverage: this._toDecimal(
-              r["RANGEOFCOVERAGEINMONTHS"]
-            ),
-            PN: r["PN"],
-            Customer: r["CUSTOMER"],
-            EndCustomer: r["ENDCUSTOMER"],
-            LastConsumptionDate: this._formatExcelDate(
-              r["LASTCONSUMPTION"]
-            ),
-            Reason: r["REASON"],
-            Caused: this._validateCaused(
-              r["CAUSED"],
-              index
-            ),
-            Weight: this._toDecimal(
-              r["WEIGHT(ONBASEUNIT)"]
-            ),
-            TotalAmount: this._toDecimal(
-              r["TOTALAMOUNT"]
-            )
-          };
-        });
-      },
+      //     return {
+      //       RFQID: this._toString(r["RFQ-ID"]),
+      //       Plant: r["PLANT"],
+      //       Component: r["COMPONENT"],
+      //       Description: r["DESCRIPTION"],
+      //       Manufacturer: this._toString(r["MANUFACTURERPARTNR."]),
+      //       AvailableStock: this._toDecimal(
+      //         r["AVAILABLESTOCK(FREESTOCK),M,PC"]
+      //       ),
+      //       AvailableCU: this._toDecimal(
+      //         r["FREESTOCKFULLCOPPER"]
+      //       ),
+      //       Currency: r["CURRENCY"],
+      //       RangeOfCoverage: this._toDecimal(
+      //         r["RANGEOFCOVERAGEINMONTHS"]
+      //       ),
+      //       PN: r["PN"],
+      //       Customer: r["CUSTOMER"],
+      //       EndCustomer: r["ENDCUSTOMER"],
+      //       LastConsumptionDate: this._formatExcelDate(
+      //         r["LASTCONSUMPTION"]
+      //       ),
+      //       Reason: r["REASON"],
+      //       Caused: this._validateCaused(
+      //         r["CAUSED"],
+      //         index
+      //       ),
+      //       Weight: this._toDecimal(
+      //         r["WEIGHT(ONBASEUNIT)"]
+      //       ),
+      //       TotalAmount: this._toDecimal(
+      //         r["TOTALAMOUNT"]
+      //       )
+      //     };
+      //   });
+      // },
 
       _validateCaused: function (value, rowIndex) {
         if (!value) {
@@ -487,7 +557,7 @@ sap.ui.define(
       },
 
 
-      _formatExcelDate: function (value) {
+      _formatExcelDate1: function (value) {
 
         // If already a JS Date
         if (value instanceof Date) {
@@ -503,6 +573,28 @@ sap.ui.define(
 
         // If string (already formatted)
         return value;
+      },
+      _formatExcelDate: function (excelDate) {
+        if (!excelDate) {
+          return null;
+        }
+
+        // If already a date, return it
+        if (excelDate instanceof Date) {
+          return excelDate;
+        }
+
+        // If it's a number (Excel serial date)
+        if (!isNaN(excelDate)) {
+          // Excel base date: Jan 1, 1900
+          const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+          const jsDate = new Date(excelEpoch.getTime() + excelDate * 86400000);
+          return jsDate;
+        }
+
+        // If string date, try parsing
+        const parsed = new Date(excelDate);
+        return isNaN(parsed) ? null : parsed;
       },
 
 
@@ -682,6 +774,333 @@ sap.ui.define(
         return `/${appPath}/dms_api/browser`
 
       },
+
+
+
+
+
+      //New Requirement for build view table
+      // onFileChange: async function (oEvent) {
+      //   const oView = this.getView();
+      //   const oFile = oEvent.getParameter("files")[0];
+      //   if (!oFile) return;
+
+      //   const reader = new FileReader();
+
+      //   reader.onload = async (e) => {
+      //     try {
+      //       const data = new Uint8Array(e.target.result);
+      //       const workbook = XLSX.read(data, { type: "array" });
+      //       const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      //       let jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "", cellDates: true });
+
+      //       jsonData = this._normalizeExcelData(jsonData);
+
+      //       const aMapped = await this._validateAndMapExcel(jsonData);
+
+      //       this.getView()
+      //         .getModel("WorkflowItem")
+      //         .setProperty("/items", aMapped);
+
+      //     } catch (err) {
+      //       sap.m.MessageBox.error(err.message);
+      //     }
+      //   };
+
+      //   reader.readAsArrayBuffer(oFile);
+      // },
+      onFileChange: async function (oEvent) {
+        const oView = this.getView();
+        const oFile = oEvent.getParameter("files")[0];
+
+        if (!oFile) {
+          sap.m.MessageToast.show("No file selected");
+          return;
+        }
+
+        oView.setBusy(true);   // START BUSY
+
+        try {
+          // Read file
+          const arrayBuffer = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(oFile);
+          });
+
+          const data = new Uint8Array(arrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          let jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          jsonData = this._normalizeExcelData(jsonData);
+
+          // Async validation (Excel + backend)
+          const aMapped = await this._validateAndMapExcel(jsonData);
+
+          // Load into table
+          this.getView()
+            .getModel("WorkflowItem")
+            .setProperty("/items", aMapped);
+
+        } catch (err) {
+          sap.m.MessageBox.error(err.message || "Error processing Excel file");
+        }
+
+        oView.setBusy(false);   // STOP BUSY
+      },
+      _validateAndMapExcel: async function (excelData) {
+
+        // HARD VALIDATION
+        if (!excelData.length) {
+          throw new Error("Excel file is empty");
+        }
+
+        this._REQUIRED_COLUMNS.forEach(col => {
+          if (!(col in excelData[0])) {
+            throw new Error(`Missing required column: ${col}`);
+          }
+        });
+
+        // Build duplicate map (Excel level)
+        const oKeyMap = {};
+        excelData.forEach((r, index) => {
+          const plant = this._toString(r["PLANT"]);
+          const component = this._toString(r["COMPONENT"]);
+          const key = plant + "||" + component;
+
+          if (!oKeyMap[key]) {
+            oKeyMap[key] = [];
+          }
+          oKeyMap[key].push(index);
+        });
+
+        const aResult = [];
+
+        // ROW-LEVEL VALIDATION
+        excelData.forEach((r, index) => {
+          const aErrors = [];
+          const rowNo = index + 2;
+
+          const plant = this._toString(r["PLANT"]);
+          const component = this._toString(r["COMPONENT"]);
+          const key = plant + "||" + component;
+
+          // Mandatory validation
+          this._REQUIRED_COLUMNS.forEach(col => {
+            if (r[col] === "" || r[col] === null || r[col] === undefined) {
+              aErrors.push(`Empty value in column "${col}"`);
+            }
+          });
+
+          // Excel duplicate validation
+          if (oKeyMap[key].length > 1) {
+            aErrors.push("Duplicate Plant + Component combination in Excel");
+          }
+
+          // Caused validation
+          try {
+            this._validateCaused(r["CAUSED"], index);
+          } catch (e) {
+            aErrors.push(e.message);
+          }
+
+          // Plant length
+          if (plant && plant.length > 4) {
+            aErrors.push("Plant value cannot be greater than 4 characters");
+          }
+
+          // availableStock > 0 decimal
+          const availableStock = this._toDecimal(
+            r["AVAILABLESTOCK(FREESTOCK),M,PC"]
+          );
+          if (isNaN(availableStock) || availableStock <= 0) {
+            aErrors.push("Available Stock must be a decimal greater than 0");
+          }
+
+          // freeStock > 0 decimal
+          const freeStock = this._toDecimal(
+            r["FREESTOCKFULLCOPPER"]
+          );
+          if (isNaN(freeStock) || freeStock <= 0) {
+            aErrors.push("Free stock full copper must be a decimal greater than 0");
+          }
+
+          // totalAmount decimal
+          const totalAmount = this._toDecimal(r["TOTALAMOUNT"]);
+          if (isNaN(totalAmount)) {
+            aErrors.push("Total Amount must be a decimal value");
+          }
+
+          // weight decimal
+          const weight = this._toDecimal(r["WEIGHT(ONBASEUNIT)"]);
+          if (isNaN(weight)) {
+            aErrors.push("Weight must be a decimal value");
+          }
+
+          // currency length
+          const currency = r["CURRENCY"];
+          if (!currency || currency.toString().trim().length !== 3) {
+            aErrors.push("Currency must be exactly 3 characters");
+          }
+
+          // reason integer
+          const reason = r["REASON"];
+          if (!/^\d+$/.test(reason)) {
+            aErrors.push("Reason must be an integer value");
+          }
+
+          // lastConsumption date
+          const lastConsumption = this._formatExcelDate(r["LASTCONSUMPTION"]);
+          if (!lastConsumption) {
+            aErrors.push("Last Consumption must be a valid date");
+          }
+
+          aResult.push({
+            plant: plant,
+            component: component,
+            rfq: this._toString(r["RFQ-ID"]),
+            description: r["DESCRIPTION"],
+            manufacturerPart: this._toString(r["MANUFACTURERPARTNR."]),
+            availableStock: availableStock,
+            freeStock: freeStock,
+            currency: currency,
+            lastConsumption: lastConsumption,
+            rangeCoverage: this._toDecimal(
+              r["RANGEOFCOVERAGEINMONTHS"]
+            ),
+            pn: r["PN"],
+            customer: r["CUSTOMER"],
+            endCustomer: r["ENDCUSTOMER"],
+            reason: reason,
+            caused: r["CAUSED"],
+            totalAmount: totalAmount,
+            weight: weight,
+            errors: aErrors,
+            errorCount: aErrors.length
+          });
+        });
+
+        // ----------------------------
+        // BACKEND DUPLICATE VALIDATION
+        // ----------------------------
+        const aPayload = aResult.map(item => ({
+          Plant: item.plant,
+          Component: item.component
+        }));
+
+        const aDuplicateComponent = await this._validateComponent(aPayload);
+        const aDuplicates = aDuplicateComponent?.d?.results || [];
+
+        if (aDuplicates.length > 0) {
+          aDuplicates.forEach(dup => {
+            aResult.forEach(row => {
+              if (
+                row.plant === dup.plant &&
+                row.component === dup.component
+              ) {
+                row.errors.push("Component already exists in system");
+                row.errorCount = row.errors.length;
+              }
+            });
+          });
+        }
+
+        return aResult;
+      },
+      onErrorPress: function (oEvent) {
+        const oContext = oEvent.getSource().getBindingContext("WorkflowItem");
+        const aErrors = oContext.getProperty("errors");
+
+        if (!aErrors || !aErrors.length) {
+          sap.m.MessageToast.show("No errors for this row");
+          return;
+        }
+
+        const sMessage = aErrors
+          .map((msg, i) => `${i + 1}. ${msg}`)
+          .join("\n");
+
+        sap.m.MessageBox.error(sMessage);
+      },
+      onToggleErrorFilter: function (oEvent) {
+        const bShowOnlyErrors = oEvent.getParameter("selected");
+        this._bShowOnlyErrors = oEvent.getParameter("selected");
+        this._applyTableFilters();
+
+        const oTable = this.byId("errorTable");
+        const oBinding = oTable.getBinding("rows");
+
+        if (!oBinding) return;
+
+        if (bShowOnlyErrors) {
+          const oFilter = new sap.ui.model.Filter(
+            "errorCount",
+            sap.ui.model.FilterOperator.GT,
+            0
+          );
+          oBinding.filter([oFilter]);
+        } else {
+          oBinding.filter([]); // clear filter
+        }
+      },
+      onSearchTable: function (oEvent) {
+        this._sSearchQuery = oEvent.getParameter("newValue") || "";
+        this._applyTableFilters();
+      }, _applyTableFilters: function () {
+        const oTable = this.byId("errorTable");
+        const oBinding = oTable.getBinding("rows");
+
+        if (!oBinding) {
+          return;
+        }
+
+        const aFilters = [];
+
+        // Error filter
+        if (this._bShowOnlyErrors) {
+          aFilters.push(
+            new sap.ui.model.Filter(
+              "errorCount",
+              sap.ui.model.FilterOperator.GT,
+              0
+            )
+          );
+        }
+
+        // Search filter
+        // Search filter
+        if (this._sSearchQuery) {
+          const sQuery = this._sSearchQuery;
+          const aSearchFilters = [
+            new sap.ui.model.Filter("plant", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("component", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("rfq", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("description", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("manufacturerPart", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("currency", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("pn", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("customer", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("endCustomer", sap.ui.model.FilterOperator.Contains, sQuery),
+            new sap.ui.model.Filter("caused", sap.ui.model.FilterOperator.Contains, sQuery)
+          ];
+
+          aFilters.push(
+            new sap.ui.model.Filter({
+              filters: aSearchFilters,
+              and: false
+            })
+          );
+        }
+
+        // Apply all filters together
+        oBinding.filter(aFilters);
+      }
+
+
+
+
+
 
 
 

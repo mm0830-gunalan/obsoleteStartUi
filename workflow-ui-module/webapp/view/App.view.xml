@@ -5,74 +5,279 @@
     xmlns:core="sap.ui.core"
     xmlns:f="sap.ui.layout.form"
     xmlns:u="sap.ui.unified"
+    xmlns:table="sap.ui.table"
     displayBlock="true"
+    height="100%"
 >
     <App id="app1">
         <Page
             title="Create Workflow Item"
+            enableScrolling="false"
             class="sapUiContentPadding"
         >
             <content>
-                <f:SimpleForm
-                    id="uploadForm"
-                    layout="ResponsiveGridLayout"
-                    editable="true"
-                    labelSpanXL="3"
-                    labelSpanL="3"
-                    labelSpanM="4"
-                    labelSpanS="12"
-                    adjustLabelSpan="false"
-                    emptySpanXL="4"
-                    emptySpanL="4"
-                    emptySpanM="0"
-                    emptySpanS="0"
-                    columnsXL="1"
-                    columnsL="1"
-                    columnsM="1"
+                <FlexBox
+                    direction="Column"
+                    height="100%"
+                    fitContainer="true"
                 >
-                    <!-- Company Dropdown -->
-                    <Label
-                        text="Company"
-                        required="true"
-                    />
-                    <Select
-                        id="companySelect"
-                        width="100%"
-                        class="sapUiSmallMarginBottom"
-                        selectedKey="{/company}"
-                        forceSelection="false"
-                        items="{
-    path: 'obsolete>/Companies',
-    filters: [
-      { path: 'isActive', operator: 'EQ', value1: true }
-    ]
-  }"
-                    >
-                        <core:Item
-                            key="{obsolete>companyCode}"
-                            text="{= ${obsolete>companyCode} + ' - ' + ${obsolete>companyName} }"
-                        />
-                    </Select>
+                    <!-- Top Form -->
+                    <VBox class="sapUiSmallMargin">
+                        <layoutData>
+                            <FlexItemData
+                                growFactor="0"
+                                shrinkFactor="0"
+                            />
+                        </layoutData>
 
-                    <!-- Excel File Upload -->
-                    <Label
-                        text="Upload Excel File"
-                        required="true"
-                    />
-                    <u:FileUploader
-                        id="excelUploader"
-                        fileType="xlsx"
-                        placeholder="Choose an Excel file"
-                        buttonText="Browse"
-                        width="100%"
-                        class="sapUiSmallMarginBottom"
-                        change="onFileChange"
-                        useMultipart="false"
-                    />
-                </f:SimpleForm>
+                        <f:SimpleForm
+                            id="uploadForm"
+                            layout="ResponsiveGridLayout"
+                            editable="true"
+                            labelSpanXL="3"
+                            labelSpanL="3"
+                            labelSpanM="4"
+                            labelSpanS="12"
+                            adjustLabelSpan="false"
+                            emptySpanXL="4"
+                            emptySpanL="4"
+                            emptySpanM="0"
+                            emptySpanS="0"
+                            columnsXL="1"
+                            columnsL="1"
+                            columnsM="1"
+                        >
+                            <!-- Company Dropdown -->
+                            <Label
+                                text="Company"
+                                required="true"
+                            />
+                            <Select
+                                id="companySelect"
+                                width="100%"
+                                selectedKey="{/company}"
+                                forceSelection="false"
+                                items="{
+                                    path: 'obsolete>/Companies',
+                                    filters: [
+                                      { path: 'isActive', operator: 'EQ', value1: true }
+                                    ]
+                                }"
+                            >
+                                <core:Item
+                                    key="{obsolete>companyCode}"
+                                    text="{= ${obsolete>companyCode} + ' - ' + ${obsolete>companyName} }"
+                                />
+                            </Select>
+
+                            <!-- Excel Upload -->
+                            <Label
+                                text="Upload Excel File"
+                                required="true"
+                            />
+                            <u:FileUploader
+                                id="excelUploader"
+                                fileType="xlsx"
+                                placeholder="Choose an Excel file"
+                                buttonText="Browse"
+                                width="100%"
+                                change="onFileChange"
+                                useMultipart="false"
+                            />
+                        </f:SimpleForm>
+                    </VBox>
+
+                    <!-- Error Grid Table -->
+                    <table:Table
+                        id="errorTable"
+                        rows="{WorkflowItem>/items}"
+                        selectionMode="None"
+                        visibleRowCountMode="Auto"
+                        class="sapUiSmallMarginTop"
+                    >
+                        <table:layoutData>
+                            <FlexItemData
+                                growFactor="1"
+                                shrinkFactor="1"
+                                baseSize="0%"
+                            />
+                        </table:layoutData>
+
+                        <table:extension>
+                            <OverflowToolbar>
+                                <Title
+                                    text="Obsolete Item"
+                                    level="H2"
+                                />
+                                <ToolbarSpacer />
+                                <SearchField
+                                    width="15rem"
+                                    placeholder="Search..."
+                                    liveChange="onSearchTable"
+                                />
+                                <CheckBox
+                                    text="Show only error rows"
+                                    select="onToggleErrorFilter"
+                                />
+                            </OverflowToolbar>
+                        </table:extension>
+
+                        <table:columns>
+                            <table:Column width="10rem">
+                                <Label text="Error" />
+                                <table:template>
+                                    <HBox>
+                                        <!-- If row has errors -->
+                                        <Button
+                                            text="{= 'View Error (' + ${WorkflowItem>errorCount} + ')' }"
+                                            type="Negative"
+                                            press="onErrorPress"
+                                            visible="{= ${WorkflowItem>errorCount} > 0 }"
+                                        />
+
+                                        <!-- If no errors -->
+                                        <ObjectStatus
+                                            text="No Error"
+                                            state="Success"
+                                            visible="{= ${WorkflowItem>errorCount} === 0 }"
+                                        />
+                                    </HBox>
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="Plant" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>plant}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="12rem">
+                                <Label text="Component" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>component}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="10rem">
+                                <Label text="RFQ" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>rfq}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="17rem">
+                                <Label text="Description" />
+                                <table:template>
+                                    <Text
+                                        text="{WorkflowItem>description}"
+                                        wrapping="false"
+                                    />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="13rem">
+                                <Label text="Manufacture Part" />
+                                <table:template>
+                                    <Text
+                                        text="{WorkflowItem>manufacturerPart}"
+                                    />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="Available Stock" />
+                                <table:template>
+                                    <Text
+                                        text="{WorkflowItem>availableStock}"
+                                    />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="14rem">
+                                <Label text="Free stock full copper" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>freeStock}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="5rem">
+                                <Label text="Currency" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>currency}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="9rem">
+                                <Label text="Last Consumption" />
+                                <table:template>
+                                    <Text
+                                        text="{path: 'WorkflowItem>lastConsumption', type: 'sap.ui.model.type.Date', formatOptions: {pattern: 'dd.MM.yyyy'}}"
+                                    />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="Range Coverage" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>rangeCoverage}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="10rem">
+                                <Label text="PN" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>pn}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="10rem">
+                                <Label text="Customer" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>customer}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="10rem">
+                                <Label text="End Customer" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>endCustomer}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="Reason" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>reason}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="7rem">
+                                <Label text="Caused" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>caused}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="Total Amount" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>totalAmount}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="Weight" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>weight}" />
+                                </table:template>
+                            </table:Column>
+                        </table:columns>
+                    </table:Table>
+                </FlexBox>
             </content>
 
-            <!-- Footer with Submit Button -->
+            <!-- Footer -->
             <footer>
                 <Toolbar>
                     <ToolbarSpacer />
@@ -81,16 +286,6 @@
                         type="Emphasized"
                         press="onSubmit"
                     />
-
-                    <!-- <Button
-                        text="Upload"
-                        type="Emphasized"
-                        press="onUpload"
-                    />
-                    <Button
-                        text="Test List Root Contents"
-                        press="onTestRepositories"
-                    /> -->
                 </Toolbar>
             </footer>
         </Page>

@@ -96,6 +96,7 @@
                         selectionMode="None"
                         visibleRowCountMode="Auto"
                         class="sapUiSmallMarginTop"
+                        fixedColumnCount="3"
                     >
                         <table:layoutData>
                             <FlexItemData

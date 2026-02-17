@@ -11,7 +11,7 @@
 >
     <App id="app1">
         <Page
-            title="Create Workflow Item"
+            title="{i18n>pageTitle}"
             enableScrolling="false"
             class="sapUiContentPadding"
         >
@@ -49,7 +49,7 @@
                         >
                             <!-- Company Dropdown -->
                             <Label
-                                text="Company"
+                                text="{i18n>labelCompany}"
                                 required="true"
                             />
                             <Select
@@ -73,14 +73,14 @@
 
                             <!-- Excel Upload -->
                             <Label
-                                text="Upload Excel File"
+                                text="{i18n>labelUploadExcel}"
                                 required="true"
                             />
                             <u:FileUploader
                                 id="excelUploader"
                                 fileType="xlsx"
-                                placeholder="Choose an Excel file"
-                                buttonText="Browse"
+                                placeholder="{i18n>placeholderChooseFile}"
+                                buttonText="{i18n>buttonBrowse}"
                                 width="100%"
                                 change="onFileChange"
                                 useMultipart="false"
@@ -109,17 +109,17 @@
                         <table:extension>
                             <OverflowToolbar>
                                 <Title
-                                    text="Obsolete Item"
+                                    text="{i18n>titleObsoleteItem}"
                                     level="H2"
                                 />
                                 <ToolbarSpacer />
                                 <SearchField
                                     width="15rem"
-                                    placeholder="Search..."
+                                    placeholder="{i18n>searchPlaceholder}"
                                     liveChange="onSearchTable"
                                 />
                                 <CheckBox
-                                    text="Show only error rows"
+                                    text="{i18n>checkboxShowErrors}"
                                     select="onToggleErrorFilter"
                                 />
                             </OverflowToolbar>
@@ -127,20 +127,17 @@
 
                         <table:columns>
                             <table:Column width="10rem">
-                                <Label text="Error" />
+                                <Label text="{i18n>colError}" />
                                 <table:template>
                                     <HBox>
-                                        <!-- If row has errors -->
                                         <Button
                                             text="{= 'View Error (' + ${WorkflowItem>errorCount} + ')' }"
                                             type="Negative"
                                             press="onErrorPress"
                                             visible="{= ${WorkflowItem>errorCount} > 0 }"
                                         />
-
-                                        <!-- If no errors -->
                                         <ObjectStatus
-                                            text="No Error"
+                                            text="{i18n>statusNoError}"
                                             state="Success"
                                             visible="{= ${WorkflowItem>errorCount} === 0 }"
                                         />
@@ -149,28 +146,28 @@
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="Plant" />
+                                <Label text="{i18n>colPlant}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>plant}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="12rem">
-                                <Label text="Component" />
+                                <Label text="{i18n>colComponent}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>component}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="10rem">
-                                <Label text="RFQ" />
+                                <Label text="{i18n>colRFQ}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>rfq}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="17rem">
-                                <Label text="Description" />
+                                <Label text="{i18n>colDescription}" />
                                 <table:template>
                                     <Text
                                         text="{WorkflowItem>description}"
@@ -180,7 +177,7 @@
                             </table:Column>
 
                             <table:Column width="13rem">
-                                <Label text="Manufacture Part" />
+                                <Label text="{i18n>colManufacturerPart}" />
                                 <table:template>
                                     <Text
                                         text="{WorkflowItem>manufacturerPart}"
@@ -189,7 +186,7 @@
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="Available Stock" />
+                                <Label text="{i18n>colAvailableStock}" />
                                 <table:template>
                                     <Text
                                         text="{WorkflowItem>availableStock}"
@@ -198,21 +195,21 @@
                             </table:Column>
 
                             <table:Column width="14rem">
-                                <Label text="Free stock full copper" />
+                                <Label text="{i18n>colFreeStock}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>freeStock}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="5rem">
-                                <Label text="Currency" />
+                                <Label text="{i18n>colCurrency}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>currency}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="9rem">
-                                <Label text="Last Consumption" />
+                                <Label text="{i18n>colLastConsumption}" />
                                 <table:template>
                                     <Text
                                         text="{path: 'WorkflowItem>lastConsumption', type: 'sap.ui.model.type.Date', formatOptions: {pattern: 'dd.MM.yyyy'}}"
@@ -221,56 +218,56 @@
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="Range Coverage" />
+                                <Label text="{i18n>colRangeCoverage}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>rangeCoverage}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="10rem">
-                                <Label text="PN" />
+                                <Label text="{i18n>colPN}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>pn}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="10rem">
-                                <Label text="Customer" />
+                                <Label text="{i18n>colCustomer}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>customer}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="10rem">
-                                <Label text="End Customer" />
+                                <Label text="{i18n>colEndCustomer}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>endCustomer}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="Reason" />
+                                <Label text="{i18n>colReason}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>reason}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="7rem">
-                                <Label text="Caused" />
+                                <Label text="{i18n>colCaused}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>caused}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="Total Amount" />
+                                <Label text="{i18n>colTotalAmount}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>totalAmount}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="Weight" />
+                                <Label text="{i18n>colWeight}" />
                                 <table:template>
                                     <Text text="{WorkflowItem>weight}" />
                                 </table:template>
@@ -285,7 +282,7 @@
                 <Toolbar>
                     <ToolbarSpacer />
                     <Button
-                        text="Submit"
+                        text="{i18n>btnSubmit}"
                         type="Emphasized"
                         press="onSubmit"
                     />

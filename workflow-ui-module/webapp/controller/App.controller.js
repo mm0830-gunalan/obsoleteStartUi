@@ -15,7 +15,6 @@ sap.ui.define(
         "DESCRIPTION",
         "MANUFACTURERPARTNR.",
         "AVAILABLESTOCK(FREESTOCK),M,PC",
-        // "AVAILABLE€CUINCLUDED",
         "FREESTOCKFULLCOPPER",
         "CURRENCY",
         "LASTCONSUMPTION",
@@ -49,24 +48,6 @@ sap.ui.define(
         this.getView().setModel(oViewModel, "view");
 
       },
-      // onShowErrors: function () {
-      //   const aTestErrors = [
-      //     {
-      //       error: "Invalid plant",
-      //       rfq: "RFQ001",
-      //       component: "COMP1001",
-      //       plant: "PL01"
-      //     },
-      //     {
-      //       error: "Missing component",
-      //       rfq: "RFQ002",
-      //       component: "",
-      //       plant: "PL02"
-      //     }
-      //   ];
-
-      //   this.getView().getModel("TestModel").setProperty("/items", aTestErrors);
-      // },
       _normalizeColumnName: function (col) {
         return col
           .replace(/\r?\n/g, " ")
@@ -75,46 +56,6 @@ sap.ui.define(
           .toUpperCase();
       },
 
-      // startWorkflowInstance1: function (oPayload, folderIdCmis, docId) {
-      //   var model = this.getView().getModel();
-      //   let data = {
-      //     "definitionId": "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
-      //     "context": {
-      //       // "obsoleteitems": oPayload,
-      //       "company": this.byId("companySelect").getSelectedKey(),
-      //       "file": folderIdCmis,
-      //       "documentid": docId
-      //     }
-      //   }
-
-      //   $.ajax({
-      //     url: this._getWorkflowRuntimeBaseURL() + "/workflow-instances?environmentId=businessprocessworkflow",
-      //     method: "POST",
-      //     async: false,
-      //     contentType: "application/json",
-      //     headers: {
-      //       "X-CSRF-Token": this._fetchToken(),
-      //     },
-      //     data: JSON.stringify(data),
-      //     // success: function (result, xhr, data) {
-      //     // },
-      //     success: function (result) {
-      //       sap.m.MessageBox.success(
-      //         "Submitted successfully",
-      //         {
-      //           title: "Success",
-      //           onClose: function () {
-      //             this._resetForm();
-      //           }.bind(this)
-      //         }
-      //       );
-      //     }.bind(this),
-      //     error: function (request, status, error) {
-      //       var response = JSON.parse(request.responseText);
-      //       MessageBox.error(response.error.message);
-      //     },
-      //   });
-      // },
 
       startWorkflowInstance: function (folderIdCmis, docId) {
         var that = this;
@@ -149,7 +90,7 @@ sap.ui.define(
                   }
                 }
               );
-              resolve(result);   // ✅ Promise resolved
+              resolve(result);   //  Promise resolved
             },
 
             error: function (request) {
@@ -224,75 +165,6 @@ sap.ui.define(
       },
 
 
-
-      // onSubmit: function () {
-
-      //   //Busy  first
-      //   var oView = this.getView();
-      //   oView.setBusy(true);   // 
-      //   var oUploader = this.byId("excelUploader");
-
-      //   if (!oUploader || !oUploader.oFileUpload || !oUploader.oFileUpload.files.length) {
-      //     oView.setBusy(false);
-      //     MessageBox.error("Please upload an Excel file");
-      //     return;
-      //   }
-
-      //   var oFile = oUploader.oFileUpload.files[0];
-
-      //   const sFileName = oFile.name + "_" + this._generateUUID();
-
-      //   const sOrgFileName = oFile.name;
-      //   try {
-      //     const selectedCompany = this.byId("companySelect").getSelectedKey();
-
-      //     oView.setBusy(false);
-      //     if (selectedCompany === '') {
-      //       return MessageBox.error("Select the company code");
-      //     }
-      //     MessageBox.confirm(
-      //       "Excel validated successfully.\n\nAre you sure you want to submit?",
-      //       {
-      //         title: "Confirm Submission",
-      //         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-      //         emphasizedAction: sap.m.MessageBox.Action.YES,
-      //         onClose: async function (oAction) {
-      //           if (oAction === sap.m.MessageBox.Action.YES) {
-      //             oView.setBusy(true);
-      //             try {
-      //               const folderId = await this.onUpload(sFileName); //  WAIT HERE
-
-      //               if (folderId) {
-      //                 const docId = await this.onUploadDocument(oFile, sOrgFileName, sFileName);
-
-      //                 const folderIdCmis = `spa-res:cmis:folderid:${folderId}`
-
-      //                 await this.startWorkflowInstance(folderIdCmis, docId);
-      //               } else {
-      //                 sap.m.MessageToast.show("Failed to create folder");
-      //               }
-
-      //             } catch (err) {
-      //               console.error(err);
-      //               MessageBox.error("Folder creation failed");
-      //             } finally {
-      //               oView.setBusy(false);   // BUSY OFF
-      //             }
-      //           }
-      //         }.bind(this)
-
-      //       }
-      //     );
-
-
-      //   } catch (err) {
-      //     oView.setBusy(false);
-      //     MessageBox.error(err.message);
-      //   }
-
-
-
-      // },
 
       onSubmit: function () {
 
@@ -489,67 +361,6 @@ sap.ui.define(
       },
 
 
-
-      //Commenting this correct code
-      // _validateAndMapExcel: function (excelData) {
-
-      //   if (!excelData.length) {
-      //     throw new Error("Excel file is empty");
-      //   }
-
-      //   this._REQUIRED_COLUMNS.forEach(col => {
-      //     if (!(col in excelData[0])) {
-      //       throw new Error(`Missing required column: ${col}`);
-      //     }
-      //   });
-
-      //   return excelData.map((r, index) => {
-
-      //     this._REQUIRED_COLUMNS.forEach(col => {
-      //       if (r[col] === "" || r[col] === null || r[col] === undefined) {
-      //         throw new Error(
-      //           `Empty value in column "${col}" at row ${index + 2}`
-      //         );
-      //       }
-      //     });
-
-      //     return {
-      //       RFQID: this._toString(r["RFQ-ID"]),
-      //       Plant: r["PLANT"],
-      //       Component: r["COMPONENT"],
-      //       Description: r["DESCRIPTION"],
-      //       Manufacturer: this._toString(r["MANUFACTURERPARTNR."]),
-      //       AvailableStock: this._toDecimal(
-      //         r["AVAILABLESTOCK(FREESTOCK),M,PC"]
-      //       ),
-      //       AvailableCU: this._toDecimal(
-      //         r["FREESTOCKFULLCOPPER"]
-      //       ),
-      //       Currency: r["CURRENCY"],
-      //       RangeOfCoverage: this._toDecimal(
-      //         r["RANGEOFCOVERAGEINMONTHS"]
-      //       ),
-      //       PN: r["PN"],
-      //       Customer: r["CUSTOMER"],
-      //       EndCustomer: r["ENDCUSTOMER"],
-      //       LastConsumptionDate: this._formatExcelDate(
-      //         r["LASTCONSUMPTION"]
-      //       ),
-      //       Reason: r["REASON"],
-      //       Caused: this._validateCaused(
-      //         r["CAUSED"],
-      //         index
-      //       ),
-      //       Weight: this._toDecimal(
-      //         r["WEIGHT(ONBASEUNIT)"]
-      //       ),
-      //       TotalAmount: this._toDecimal(
-      //         r["TOTALAMOUNT"]
-      //       )
-      //     };
-      //   });
-      // },
-
       _validateCaused: function (value, rowIndex) {
         if (!value) {
           throw new Error(`Empty value in column "CAUSED" at row ${rowIndex + 2}`);
@@ -705,6 +516,8 @@ sap.ui.define(
       onUploadDocument: function (oFile, sFileName, sFolderObjectId) {
         return new Promise((resolve, reject) => {
           try {
+
+            //When deploying to   PROD chnage the repositoryID
             const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7";
 
             const formData = new FormData();
@@ -750,32 +563,6 @@ sap.ui.define(
         });
       },
 
-      onTestRepositories: function () {
-        var sUrl = "/dms_api/browser";  // Proxies to /rest/v2/repositories
-
-
-
-        $.ajax({
-          url: this._getWorkflowRuntimeBaseURLTest(),
-          method: "GET",
-          async: false,
-          contentType: "application/json",
-          headers: {
-            "X-CSRF-Token": this._fetchToken(),
-          },
-          // success: function (result, xhr, data) {
-          // },
-          success: function (result) {
-            sap.m.MessageBox.success(
-              "Submitted successfully"
-            );
-          },
-          error: function (request, status, error) {
-            var response = JSON.parse(request.responseText);
-            MessageBox.error(response.error.message);
-          },
-        });
-      },
 
       _getWorkflowRuntimeBaseURLTest: function () {
         var ui5CloudService = this.getOwnerComponent().getManifestEntry("/sap.cloud/service").replaceAll(".", "");
@@ -786,39 +573,6 @@ sap.ui.define(
       },
 
 
-
-
-
-      //New Requirement for build view table
-      // onFileChange: async function (oEvent) {
-      //   const oView = this.getView();
-      //   const oFile = oEvent.getParameter("files")[0];
-      //   if (!oFile) return;
-
-      //   const reader = new FileReader();
-
-      //   reader.onload = async (e) => {
-      //     try {
-      //       const data = new Uint8Array(e.target.result);
-      //       const workbook = XLSX.read(data, { type: "array" });
-      //       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      //       let jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "", cellDates: true });
-
-      //       jsonData = this._normalizeExcelData(jsonData);
-
-      //       const aMapped = await this._validateAndMapExcel(jsonData);
-
-      //       this.getView()
-      //         .getModel("WorkflowItem")
-      //         .setProperty("/items", aMapped);
-
-      //     } catch (err) {
-      //       sap.m.MessageBox.error(err.message);
-      //     }
-      //   };
-
-      //   reader.readAsArrayBuffer(oFile);
-      // },
       onFileChange: async function (oEvent) {
         const oView = this.getView();
         const oFile = oEvent.getParameter("files")[0];
@@ -1140,23 +894,6 @@ sap.ui.define(
         this._sSearchQuery = "";
         this._bShowOnlyErrors = false;
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     });
   }

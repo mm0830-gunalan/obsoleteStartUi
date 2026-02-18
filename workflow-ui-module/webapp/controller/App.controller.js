@@ -28,6 +28,26 @@ sap.ui.define(
         "TOTALAMOUNT"
       ],
 
+      _COLUMN_LABELS: {
+        "RFQ-ID": "RFQ ID",
+        "PLANT": "Plant",
+        "COMPONENT": "Component",
+        "DESCRIPTION": "Description",
+        "MANUFACTURERPARTNR.": "Manufacturer Part No.",
+        "AVAILABLESTOCK(FREESTOCK),M,PC": "Available Stock",
+        "FREESTOCKFULLCOPPER": "Free Stock Full Copper",
+        "CURRENCY": "Currency",
+        "LASTCONSUMPTION": "Last Consumption",
+        "RANGEOFCOVERAGEINMONTHS": "Range of Coverage (Months)",
+        "PN": "PN",
+        "CUSTOMER": "Customer",
+        "ENDCUSTOMER": "End Customer",
+        "REASON": "Reason",
+        "CAUSED": "Caused",
+        "WEIGHT(ONBASEUNIT)": "Weight",
+        "TOTALAMOUNT": "Total Amount"
+      },
+
 
       onInit() {
         const oModel = this.getView().getModel("obsolete");
@@ -631,7 +651,9 @@ sap.ui.define(
 
         this._REQUIRED_COLUMNS.forEach(col => {
           if (!(col in excelData[0])) {
-            throw new Error(`Missing required column: ${col}`);
+            const label = this._COLUMN_LABELS[col] || col;
+            throw new Error(`Missing required column: ${label}`);
+            // throw new Error(`Missing required column: ${col}`);
           }
         });
 
@@ -662,7 +684,8 @@ sap.ui.define(
           // Mandatory validation
           this._REQUIRED_COLUMNS.forEach(col => {
             if (r[col] === "" || r[col] === null || r[col] === undefined) {
-              aErrors.push(`Empty value in column "${col}"`);
+              const label = this._COLUMN_LABELS[col] || col;
+              aErrors.push(`Empty value in column "${label}"`);
             }
           });
 

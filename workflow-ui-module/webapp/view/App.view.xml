@@ -260,16 +260,34 @@
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="{i18n>colTotalAmount}" />
+                                <Label text="{i18n>colWeight}" />
                                 <table:template>
-                                    <Text text="{WorkflowItem>totalAmount}" />
+                                    <Text text="{WorkflowItem>weight}" />
                                 </table:template>
                             </table:Column>
 
                             <table:Column width="8rem">
-                                <Label text="{i18n>colWeight}" />
+                                <Label text="{i18n>colGoodsReceipt}" />
                                 <table:template>
-                                    <Text text="{WorkflowItem>weight}" />
+                                    <Text
+                                        text="{path: 'WorkflowItem>goodsReceipt', type: 'sap.ui.model.type.Date', formatOptions: {pattern: 'dd.MM.yyyy'}}"
+                                    />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="{i18n>colCostTakeOver}" />
+                                <table:template>
+                                    <Text text="{WorkflowItem>costTakeOver}" />
+                                </table:template>
+                            </table:Column>
+
+                            <table:Column width="8rem">
+                                <Label text="{i18n>colCustomerResponse}" />
+                                <table:template>
+                                    <Text
+                                        text="{WorkflowItem>customerResponse}"
+                                    />
                                 </table:template>
                             </table:Column>
                         </table:columns>

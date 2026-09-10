@@ -25,7 +25,9 @@ sap.ui.define(
         "REASON",
         "CAUSED",
         "WEIGHT(ONBASEUNIT)",
-        "TOTALAMOUNT"
+        "GOODSRECEIPT",
+        "COSTTAKEOVER",
+        "CUSTOMERRESPONSE",
       ],
 
       _COLUMN_LABELS: {
@@ -45,7 +47,9 @@ sap.ui.define(
         "REASON": "Reason",
         "CAUSED": "Caused",
         "WEIGHT(ONBASEUNIT)": "Weight",
-        "TOTALAMOUNT": "Total Amount"
+        "COSTTAKEOVER": "Cost Takeover",
+        "CUSTOMERRESPONSE": "Customer Response",
+        "GOODSRECEIPT": "Goods Receipt"
       },
 
 
@@ -317,6 +321,57 @@ sap.ui.define(
         });
       },
 
+      _validatePlantHandlingRules: function (aPlants) {
+
+        const oModel = this.getView().getModel("obsolete");
+        const csrfToken = oModel.getSecurityToken();
+        const serviceUrl = oModel.sServiceUrl;
+
+        // Remove empty and duplicate plants
+        const aUniquePlants = [
+          ...new Set(
+            aPlants
+              .map(plant => String(plant || "").trim())
+              .filter(Boolean)
+          )
+        ];
+
+        if (aUniquePlants.length === 0) {
+          return Promise.resolve([]);
+        }
+
+        // Prepare payload for CAP action
+        const aPlantPayload = aUniquePlants.map(plant => ({
+          plant: plant
+        }));
+
+        return new Promise((resolve, reject) => {
+
+          jQuery.ajax({
+            url: `${serviceUrl}/checkPlantHandlingRules`,
+            method: "POST",
+            contentType: "application/json",
+
+            data: JSON.stringify({
+              plants: aPlantPayload
+            }),
+
+            headers: {
+              "X-CSRF-Token": csrfToken
+            },
+
+            success: function (data) {
+              resolve(data?.d?.results || []);
+            },
+
+            error: function (err) {
+              reject(err);
+            }
+          });
+
+        });
+      },
+
       _validateLocalDuplicates: function (aPayload) {
         const map = {};
         const duplicates = {};
@@ -388,9 +443,9 @@ sap.ui.define(
 
         var normalized = value.toString().trim().toUpperCase();
 
-        if (normalized !== "PLANT" && normalized !== "CUSTOMER") {
+        if (normalized !== "LAPP" && normalized !== "CUSTOMER") {
           throw new Error(
-            `Invalid value "${value}" in column "CAUSED" at row ${rowIndex + 2}. Allowed values: Plant, Customer`
+            `Invalid value "${value}" in column "CAUSED" at row ${rowIndex + 2}. Allowed values: Lapp, Customer`
           );
         }
 
@@ -677,16 +732,133 @@ sap.ui.define(
           const aErrors = [];
           const rowNo = index + 2;
 
+
+
+          // ============================================================
+          // COST TAKEOVER / CUSTOMER RESPONSE VALIDATION
+          // ============================================================
+
+          const caused = this._validateCaused(r["CAUSED"]);
+
+          const costTakeOverRaw = this._toString(r["COSTTAKEOVER"]).trim();
+          const costTakeOver = costTakeOverRaw.toUpperCase();
+
+          const customerResponseRaw = this._toString(r["CUSTOMERRESPONSE"]).trim();
+
+          const normalizedCustomerResponse = customerResponseRaw
+            .replace(/\s+/g, "")
+            .toUpperCase();
+
+
+          // ------------------------------------------------------------
+          // CAUSED = Lapp
+          // Cost Takeover must be empty
+          // Customer Response must be empty
+          // ------------------------------------------------------------
+          if (caused === "LAPP") {
+
+            if (costTakeOverRaw) {
+              aErrors.push(
+                `Cost Takeover must be empty when Caused is "Lapp" at row ${rowNo}`
+              );
+            }
+
+            if (customerResponseRaw) {
+              aErrors.push(
+                `Customer Response must be empty when Caused is "Lapp" at row ${rowNo}`
+              );
+            }
+          }
+
+
+          // ------------------------------------------------------------
+          // CAUSED = Customer
+          // Cost Takeover must be Yes or No
+          // ------------------------------------------------------------
+          if (caused === "CUSTOMER") {
+
+            if (costTakeOver !== "YES" && costTakeOver !== "NO") {
+
+              aErrors.push(
+                `Invalid Cost Takeover at row ${rowNo}. ` +
+                `Allowed values: Yes, No`
+              );
+
+            } else if (costTakeOver === "YES") {
+
+              // ----------------------------------------------------
+              // Customer + Cost Takeover = Yes
+              // Customer Response is mandatory
+              // ----------------------------------------------------
+
+              if (
+                normalizedCustomerResponse !==
+                "CUSTOMERPURCHASESOBSOLETESTOCK" &&
+                normalizedCustomerResponse !== "CUSTOMERPAYSFORSCRAPPING"
+              ) {
+
+                aErrors.push(
+                  `Invalid Customer Response at row ${rowNo}. ` +
+                  `Allowed values: Customer purchases obsolete stock, Customer pays for scrapping`
+                );
+              }
+
+            } else if (costTakeOver === "NO") {
+
+              // ----------------------------------------------------
+              // Customer + Cost Takeover = No
+              // Customer Response must be empty
+              // ----------------------------------------------------
+
+              if (customerResponseRaw) {
+                aErrors.push(
+                  `Customer Response must be empty when Cost Takeover is "No" ` +
+                  `at row ${rowNo}`
+                );
+              }
+            }
+          }
+
+
+          // ============================================================
+          // GOODS RECEIPT VALIDATION
+          // ============================================================
+
+          const goodsReceipt = this._formatExcelDate(r["GOODSRECEIPT"]);
+
+          if (!goodsReceipt) {
+            aErrors.push(
+              `Goods Receipt must be a valid date at row ${rowNo}`
+            );
+          }
+
           const plant = this._toString(r["PLANT"]);
           const component = this._toString(r["COMPONENT"]);
           const key = plant + "||" + component;
 
           // Mandatory validation
           this._REQUIRED_COLUMNS.forEach(col => {
-            if (r[col] === "" || r[col] === null || r[col] === undefined) {
-              const label = this._COLUMN_LABELS[col] || col;
-              aErrors.push(`Empty value in column "${label}"`);
+
+            const isEmpty = r[col] === "" || r[col] === null || r[col] === undefined;
+
+            if (!isEmpty) {
+              return;
             }
+            // const uppercaseColumn = col.toUpperCase().trim();
+            // Cost Takeover and Customer Response are
+            // conditionally mandatory based on Caused
+            if (
+              col === "COSTTAKEOVER" ||
+              col === "CUSTOMERRESPONSE"
+            ) {
+              return;
+            }
+
+            const label = this._COLUMN_LABELS[col] || col;
+
+            aErrors.push(
+              `Empty value in column "${label}"`
+            );
           });
 
           // Excel duplicate validation
@@ -722,11 +894,6 @@ sap.ui.define(
             aErrors.push("Free stock full copper must be a decimal greater than 0");
           }
 
-          // totalAmount decimal
-          const totalAmount = this._toDecimal(r["TOTALAMOUNT"]);
-          if (isNaN(totalAmount)) {
-            aErrors.push("Total Amount must be a decimal value");
-          }
 
           // weight decimal
           const weight = this._toDecimal(r["WEIGHT(ONBASEUNIT)"]);
@@ -769,13 +936,59 @@ sap.ui.define(
             customer: r["CUSTOMER"],
             endCustomer: r["ENDCUSTOMER"],
             reason: reason,
-            caused: r["CAUSED"],
-            totalAmount: totalAmount,
+            caused: caused,
             weight: weight,
+
+            // New fields
+            costTakeOver: costTakeOverRaw,
+            customerResponse: customerResponseRaw,
+            goodsReceipt: goodsReceipt,
+
             errors: aErrors,
             errorCount: aErrors.length
           });
         });
+
+
+        // ============================================================
+        // NEW: PLANT HANDLING RULE VALIDATION
+        // ============================================================
+
+        const aPlants = [
+          ...new Set(
+            aResult
+              .map(item => String(item.plant || "").trim())
+              .filter(Boolean)
+          )
+        ];
+
+        const aMissingPlants = await this._validatePlantHandlingRules(aPlants);
+
+        if (aMissingPlants.length > 0) {
+
+          const aMissingPlantSet = new Set(
+            aMissingPlants.map(item =>
+              String(item.plant).trim()
+            )
+          );
+
+          aResult.forEach(row => {
+
+            if (
+              aMissingPlantSet.has(
+                String(row.plant).trim()
+              )
+            ) {
+
+              row.errors.push(
+                `No Plant Handling Rule configured for Plant "${row.plant}"`
+              );
+
+              row.errorCount = row.errors.length;
+            }
+
+          });
+        }
 
         // ----------------------------
         // BACKEND DUPLICATE VALIDATION
@@ -804,6 +1017,45 @@ sap.ui.define(
 
         return aResult;
       },
+
+      _validateCustomerResponse: function (value) {
+
+        const normalized = this._toString(value)
+          .replace(/\s+/g, "")
+          .toUpperCase();
+
+        if (normalized === "CUSTOMERPAYS") {
+          return "Customer pays";
+        }
+
+        if (normalized === "CUSTOMERPURCHASEOBSOLETESTOCK") {
+          return "Customer purchase obsolete stock";
+        }
+
+        return "";
+      },
+
+
+      _validateCostTakeOver: function (value) {
+
+        const normalized = this._toString(value)
+          .trim()
+          .toUpperCase();
+
+        if (normalized === "YES") {
+          return "Yes";
+        }
+
+        if (normalized === "NO") {
+          return "No";
+        }
+
+        return "";
+      },
+
+
+
+
       onErrorPress: function (oEvent) {
         const oContext = oEvent.getSource().getBindingContext("WorkflowItem");
         const aErrors = oContext.getProperty("errors");
@@ -881,13 +1133,32 @@ sap.ui.define(
             new sap.ui.model.Filter("caused", sap.ui.model.FilterOperator.Contains, sQuery)
           ];
 
+
+          const aNumericFields = ["weight", "availableStock", "freeStock",];
+          const aNumericFilters = aNumericFields.map(function (sField) {
+            return new sap.ui.model.Filter({
+              path: sField,
+              test: function (vValue) {
+                if (vValue === null || vValue === undefined) return false;
+                return String(vValue).toLowerCase().includes(sQuery);
+              }
+            });
+          });
+
           aFilters.push(
             new sap.ui.model.Filter({
-              filters: aSearchFilters,
+              filters: [...aSearchFilters, ...aNumericFilters],
               and: false
             })
           );
         }
+        //   aFilters.push(
+        //     new sap.ui.model.Filter({
+        //       filters: aSearchFilters,
+        //       and: false
+        //     })
+        //   );
+        // }
 
         // Apply all filters together
         oBinding.filter(aFilters);

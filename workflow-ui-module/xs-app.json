@@ -11,12 +11,6 @@
       "authenticationType": "xsuaa"
     },
     {
-      "source": "^/dms/(.*)$",
-      "target": "$1",
-      "destination": "DMS_API",
-      "authenticationType": "xsuaa"
-    },
-    {
       "source": "^/dms_api/(.*)$",
       "target": "$1",
       "authenticationType": "xsuaa",

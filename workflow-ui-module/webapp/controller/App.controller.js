@@ -81,12 +81,13 @@ sap.ui.define(
       },
 
 
-      startWorkflowInstance: function (folderIdCmis, docId) {
+      startWorkflowInstance: async function (folderIdCmis, docId) {
         var that = this;
 
+        const definitionId = await that._getConfig("BPA_DEFINITION_ID");
         return new Promise(function (resolve, reject) {
           let data = {
-            definitionId: "eu10.builddevlapp.obsolete.obsoleteCreationProcess",
+            definitionId: definitionId,
             context: {
               company: that.byId("companySelect").getSelectedKey(),
               file: folderIdCmis,
@@ -542,11 +543,11 @@ sap.ui.define(
 
 
 
-      onUpload: function (sFolderName) {
-        return new Promise((resolve, reject) => {
-          try {
-            const repositoryId = "cc918620-3f34-4544-b260-cb5ad8a568d7";
-            // const folderName = sFileName + "_" + this._generateUUID();
+      onUpload: async function (sFolderName) {
+        try {
+          const repositoryId = await this._getConfig("DMS_REPOSITORY_ID");
+
+          return new Promise((resolve, reject) => {
 
             const formData = new FormData();
             formData.append("cmisaction", "createFolder");
@@ -557,7 +558,8 @@ sap.ui.define(
             formData.append("succinct", "true");
 
             $.ajax({
-              url: this._getWorkflowRuntimeBaseURLTest() + `/${repositoryId}/root`,
+              url: this._getWorkflowRuntimeBaseURLTest() +
+                `/${repositoryId}/root`,
               method: "POST",
               data: formData,
               processData: false,
@@ -565,19 +567,24 @@ sap.ui.define(
               headers: {
                 "X-CSRF-Token": this._fetchToken()
               },
+
               success: function (data) {
-                const folderId = data.succinctProperties["cmis:objectId"];
-                resolve(folderId); //  THIS is the real return
+                const folderId =
+                  data.succinctProperties["cmis:objectId"];
+
+                resolve(folderId);
               },
+
               error: function (err) {
                 reject(err);
               }
             });
+          });
 
-          } catch (e) {
-            reject(e);
-          }
-        });
+        } catch (e) {
+          console.error("Failed to get DMS configuration:", e);
+          throw e;
+        }
       },
       _generateUUID: function () {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -1187,6 +1194,21 @@ sap.ui.define(
         // Reset search + error filter states
         this._sSearchQuery = "";
         this._bShowOnlyErrors = false;
+      },
+
+      _getConfig: function (sKey) {
+        var oModel = this.getView().getModel("obsolete");
+
+        return new Promise(function (resolve, reject) {
+          oModel.read(`/ApplicationConfiguration('${sKey}')`, {
+            success: function (oData) {
+              resolve(oData.configValue);
+            },
+            error: function (oError) {
+              reject(oError);
+            }
+          });
+        });
       }
 
     });
